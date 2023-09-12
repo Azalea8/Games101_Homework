@@ -197,6 +197,7 @@ void rst::rasterizer::draw(std::vector<Triangle *> &TriangleList) {
                 mvp * t->v[1],
                 mvp * t->v[2]
         };
+
         //Homogeneous division
         for (auto& vec : v) {
             vec.x()/=vec.w();

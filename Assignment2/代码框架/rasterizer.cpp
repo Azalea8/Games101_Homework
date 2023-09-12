@@ -92,7 +92,9 @@ void rst::rasterizer::draw(pos_buf_id pos_buffer, ind_buf_id ind_buffer, col_buf
                 mvp * to_vec4(buf[i[2]], 1.0f)
         };
 
-        // 齐次坐标归一化
+        // 齐次坐标归一化使其表示一个点
+        // 但是会丢失 W的值，（三维空间中的深度信息丢失）
+        // 作业3 中得到修正
         for (auto& vec : v) {
             vec /= vec.w();
         }
@@ -205,7 +207,10 @@ rst::rasterizer::rasterizer(int w, int h) : width(w), height(h)
     // frame_buf, depth_buf都是二维的，此处将他们都映射为一维，或许是为了方便openCV作图
 
     frame_buf.resize(w * h); // 帧缓存，保存图像中每个像素显示什么颜色
-    depth_buf.resize(w * h); // 深度缓存，保存图像中每个像素在三维空间中的深度信息，后续处理遮挡关系
+
+    // Z-buffer深度缓存，保存图像中每个像素在三维空间中的深度信息，后续处理遮挡关系
+    // Depth-Buffer（深度缓存）有两种：Z-Buffer 和 W-Buffer https://developer.aliyun.com/article/49272
+    depth_buf.resize(w * h);
 }
 
 int rst::rasterizer::get_index(int x, int y)

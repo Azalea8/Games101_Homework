@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "rasterizer.hpp"
 #include <opencv2/opencv.hpp>
-#include <math.h>
+#include <cmath>
 
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions)
@@ -309,7 +309,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                 z_interpolated *= w_reciprocal;
 
-                if (-z_interpolated < depth_buf[get_index(x, y)])
+                if (abs(z_interpolated) < depth_buf[get_index(x, y)])
                 {
                     Eigen::Vector2i p = { (float)x,(float)y};
                     // 颜色插值
@@ -324,7 +324,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
                     payload.view_pos = interpolated_shadingcoords;
                     auto pixel_color = fragment_shader(payload);
                     set_pixel(p, pixel_color); //设置颜色
-                    depth_buf[get_index(x, y)] = -z_interpolated;//更新z值
+                    depth_buf[get_index(x, y)] = abs(z_interpolated);//更新z值
                 }
             }
         }

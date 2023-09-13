@@ -7,7 +7,7 @@
 #include <vector>
 #include "rasterizer.hpp"
 #include <opencv2/opencv.hpp>
-#include <math.h>
+#include <cmath>
 
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions)
@@ -155,19 +155,21 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
             if (insideTriangle(x + 0.5f, y + 0.5f, t.v)) {
                 auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
 
-                // w_reciprocal 个人感觉是为了透视矫正。 Z的插值应该是在三维空间下才准确，在二维平面下直接插值计算权重的结果不正确
+                // 这三步为了透视矫正。 Z的插值应该是在三维空间下才准确，在二维平面下直接插值计算权重的结果不正确
                 // 透视矫正插值：https://zhuanlan.zhihu.com/p/144331875
                 // 作业1,2 框架相关问题： https://zhuanlan.zhihu.com/p/509902950
+                // w_reciprocal已经是三维空间下的正确深度信息，但对于遮挡关系还是选择二维平面下的深度信息，z_interpolated最后值为透视校正插值后的二维平面下正确坐标深度信息
+                // 当然也可以用 w-buffer，但普遍选择 z-buffer
                 float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                 z_interpolated *= w_reciprocal;
 
                 // 注意符号！！！ 深度缓存初始化是全为正无穷，个人习惯坐标的 Z值全取负值
                 // 插值出来的 Z值与深度缓存中记录的 Z值作比较，set_pixel将帧缓存中该像素的颜色更新，最后深度缓存更新
-                if (-z_interpolated < depth_buf[get_index(x, y)]) {
+                if (abs(z_interpolated) < depth_buf[get_index(x, y)]) {
                     Eigen::Vector3f point(x, y, 1.0f);
                     set_pixel(point, t.getColor());
-                    depth_buf[get_index(x, y)] = -z_interpolated;
+                    depth_buf[get_index(x, y)] = abs(z_interpolated);
                 }
             }
         }
@@ -209,7 +211,9 @@ rst::rasterizer::rasterizer(int w, int h) : width(w), height(h)
     frame_buf.resize(w * h); // 帧缓存，保存图像中每个像素显示什么颜色
 
     // Z-buffer深度缓存，保存图像中每个像素在三维空间中的深度信息，后续处理遮挡关系
-    // Depth-Buffer（深度缓存）有两种：Z-Buffer 和 W-Buffer https://developer.aliyun.com/article/49272
+    // Depth-Buffer（深度缓存）有两种：Z-Buffer 和 W-Buffer
+    // https://developer.aliyun.com/article/49272
+    // https://www.csie.ntu.edu.tw/~r89004/hive/hsr/page_1.html
     depth_buf.resize(w * h);
 }
 

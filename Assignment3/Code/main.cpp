@@ -347,6 +347,7 @@ int main(int argc, const char **argv) {
 
         //r.draw(pos_id, ind_id, col_id, rst::Primitive::Triangle);
         r.draw(TriangleList);
+
         cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
         image.convertTo(image, CV_8UC3, 1.0f);
         cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
@@ -355,10 +356,12 @@ int main(int argc, const char **argv) {
         cv::imwrite(filename, image);
         key = cv::waitKey(10);
 
+        std::cout << "frame count: " << frame_count++ << '\n';
+
         if (key == 'a') {
-            angle -= 0.1;
+            angle -= 10;
         } else if (key == 'd') {
-            angle += 0.1;
+            angle += 10;
         }
 
     }

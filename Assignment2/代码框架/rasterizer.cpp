@@ -152,6 +152,11 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
     for (int x = x_min; x < x_max; x++)
     {
         for (int y = y_min; y < y_max; y++) {
+            // 不在视锥中的物体进行裁切
+            if (x < 0 || x >= width || y < 0 || y >= height){
+                continue;
+            }
+
             if (insideTriangle(x + 0.5f, y + 0.5f, t.v)) {
                 auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
 

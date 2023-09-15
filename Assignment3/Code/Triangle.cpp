@@ -45,7 +45,7 @@ void Triangle::setTexCoord(int ind, Vector2f uv) {
 std::array<Vector4f, 3> Triangle::toVector4() const
 {
     std::array<Vector4f, 3> res;
-    std::transform(std::begin(v), std::end(v), res.begin(), [](auto& vec) { return Vector4f(vec.x(), vec.y(), vec.z(), 1.f); });
+    std::transform(std::begin(v), std::end(v), res.begin(), [](auto& vec) { return Vector4f(vec.x(), vec.y(), vec.z(), vec.w()); });
     return res;
 }
 

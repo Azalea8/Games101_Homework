@@ -180,6 +180,7 @@ void rst::rasterizer::draw(std::vector<Triangle *> &TriangleList) {
     {
         Triangle newtri = *t;
 
+        // 取得三维空间下的坐标 (还未投影到平面)
         std::array<Eigen::Vector4f, 3> mm {
                 (view * model * t->v[0]),
                 (view * model * t->v[1]),
@@ -232,9 +233,13 @@ void rst::rasterizer::draw(std::vector<Triangle *> &TriangleList) {
             newtri.setNormal(i, n[i].head<3>());
         }
 
-        newtri.setColor(0, 148,121.0,92.0);
+        /*newtri.setColor(0, 148,121.0,92.0);
         newtri.setColor(1, 148,121.0,92.0);
-        newtri.setColor(2, 148,121.0,92.0);
+        newtri.setColor(2, 148,121.0,92.0);*/
+
+        newtri.setColor(0, 0,0.0,255.0);
+        newtri.setColor(1, 0,255.0,0.0);
+        newtri.setColor(2, 255,0.0,0.0);
 
         // Also pass view space vertice position
         rasterize_triangle(newtri, viewspace_pos);
@@ -359,7 +364,7 @@ void rst::rasterizer::clear(rst::Buffers buff)
     }
 }
 
-rst::rasterizer::rasterizer(int w, int h) : width(w), height(h)
+rst::rasterizer::rasterizer(int h, int w) : width(w), height(h)
 {
     frame_buf.resize(w * h);
     depth_buf.resize(w * h);

@@ -76,10 +76,12 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
     return projection;
 }
 
+// 获取顶点位置
 Eigen::Vector3f vertex_shader(const vertex_shader_payload &payload) {
     return payload.position;
 }
 
+// 可视化法线信息
 Eigen::Vector3f normal_fragment_shader(const fragment_shader_payload &payload) {
     Eigen::Vector3f return_color = (payload.normal.head<3>().normalized() + Eigen::Vector3f(1.0f, 1.0f, 1.0f)) / 2.f;
     Eigen::Vector3f result;
@@ -97,6 +99,7 @@ struct light {
     Eigen::Vector3f intensity;
 };
 
+// 可视化纹理信息
 Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) {
     Eigen::Vector3f return_color = {0, 0, 0};
     if (payload.texture) {
@@ -136,6 +139,7 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) 
     return result_color * 255.f;
 }
 
+// Blinn-Phong着色模型
 Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload &payload) {
     Eigen::Vector3f ka = Eigen::Vector3f(0.005, 0.005, 0.005);
     Eigen::Vector3f kd = payload.color;
@@ -160,13 +164,22 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload &payload) {
     for (auto &light: lights) {
         // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
+        auto v = eye_pos - point; // v为出射光方向（指向眼睛）
+        auto l = light.position - point; // l为指向入射光源方向
+        auto h = (v + l).normalized(); // h 为半程向量即 v + l 归一化后的单位向量
+        auto r_2 = l.dot(l); //光源到shading point的距离
 
+        // a.cwiseProduct(b)将返回一个新的向量，其中第 i个元素等于 a中第 i个元素与 b中第 i个元素的乘积。
+        auto ambient = ka.cwiseProduct(amb_light_intensity);
+        auto diffuse = kd.cwiseProduct(light.intensity / r_2) * std::max(0.0f, normal.normalized().dot(l.normalized()));
+        auto specular = ks.cwiseProduct(light.intensity / r_2) * std::pow(std::max(0.0f, normal.normalized().dot(h)), p);
+        result_color += (ambient + diffuse + specular);
     }
 
     return result_color * 255.f;
 }
 
-
+// 可视化置换信息
 Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload &payload) {
 
     Eigen::Vector3f ka = Eigen::Vector3f(0.005, 0.005, 0.005);
@@ -214,7 +227,7 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload &payl
     return result_color * 255.f;
 }
 
-
+// 可视化凹凸信息
 Eigen::Vector3f bump_fragment_shader(const fragment_shader_payload &payload) {
 
     Eigen::Vector3f ka = Eigen::Vector3f(0.005, 0.005, 0.005);
@@ -270,7 +283,7 @@ int main(int argc, const char **argv) {
     bool loadout = Loader.LoadFile("../models/spot/spot_triangulated_good.obj");
     for (auto mesh: Loader.LoadedMeshes) {
         for (int i = 0; i < mesh.Vertices.size(); i += 3) {
-            Triangle *t = new Triangle();
+            auto *t = new Triangle();
             for (int j = 0; j < 3; j++) {
                 t->setVertex(j, Vector4f(mesh.Vertices[i + j].Position.X, mesh.Vertices[i + j].Position.Y,
                                          mesh.Vertices[i + j].Position.Z, 1.0));
@@ -283,12 +296,12 @@ int main(int argc, const char **argv) {
         }
     }
 
-    rst::rasterizer r(700, 700);
+    rst::rasterizer r(700, 1400);
 
     auto texture_path = "hmap.jpg";
     r.set_texture(Texture(obj_path + texture_path));
 
-    std::function<Eigen::Vector3f(fragment_shader_payload)> active_shader = normal_fragment_shader;
+    std::function<Eigen::Vector3f(fragment_shader_payload)> active_shader = phong_fragment_shader;
 
     if (argc >= 2) {
         command_line = true;
@@ -316,6 +329,7 @@ int main(int argc, const char **argv) {
 
     Eigen::Vector3f eye_pos = {0, 0, 10};
 
+    // 目前还没有学习 C++，个人感觉这里像 Python把函数的引用传过去，就像函数的别名
     r.set_vertex_shader(vertex_shader);
     r.set_fragment_shader(active_shader);
 
@@ -326,10 +340,11 @@ int main(int argc, const char **argv) {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth);
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45.0, 1, 0.1, 50));
+        r.set_projection(get_projection_matrix(45.0, 2, 0.1, 50));
 
         r.draw(TriangleList);
-        cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
+
+        cv::Mat image(700, 1400, CV_32FC3, r.frame_buffer().data());
         image.convertTo(image, CV_8UC3, 1.0f);
         cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
 
@@ -343,12 +358,12 @@ int main(int argc, const char **argv) {
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45.0, 1, 0.1, 50));
+        r.set_projection(get_projection_matrix(45.0, 2, 0.1, 50));
 
         //r.draw(pos_id, ind_id, col_id, rst::Primitive::Triangle);
         r.draw(TriangleList);
 
-        cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
+        cv::Mat image(700, 1400, CV_32FC3, r.frame_buffer().data());
         image.convertTo(image, CV_8UC3, 1.0f);
         cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
 

@@ -79,7 +79,7 @@ int main(int argc, const char** argv)
         filename = std::string(argv[1]);
     }
 
-    rst::rasterizer r(700, 700); // 光栅器初始化
+    rst::rasterizer r(700, 1400); // 光栅器初始化
 
     Eigen::Vector3f eye_pos = {0,0,5}; // 设置观测坐标
 
@@ -126,11 +126,11 @@ int main(int argc, const char** argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+        r.set_projection(get_projection_matrix(45, 2, 0.1, 50));
 
         r.draw(pos_id, ind_id, col_id, rst::Primitive::Triangle);
 
-        cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
+        cv::Mat image(700, 1400, CV_32FC3, r.frame_buffer().data());
         image.convertTo(image, CV_8UC3, 1.0f);
         cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
 
@@ -145,11 +145,11 @@ int main(int argc, const char** argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+        r.set_projection(get_projection_matrix(45, 2, 0.1, 50));
 
         r.draw(pos_id, ind_id, col_id, rst::Primitive::Triangle);
 
-        cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
+        cv::Mat image(700, 1400, CV_32FC3, r.frame_buffer().data());
         image.convertTo(image, CV_8UC3, 1.0f);
         cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
         cv::imshow("image", image);

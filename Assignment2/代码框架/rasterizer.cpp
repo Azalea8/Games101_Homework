@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <cmath>
 
-#define SSAA true
+#define SSAA false
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions) {
     auto id = get_next_id();
@@ -244,7 +244,7 @@ void rst::rasterizer::clear(rst::Buffers buff) {
     }
 }
 
-rst::rasterizer::rasterizer(int w, int h) : width(w), height(h) {
+rst::rasterizer::rasterizer(int h, int w) : height(h), width(w) {
     // frame_buf, depth_buf都是二维的，此处将他们都映射为一维，或许是为了方便openCV作图
 
     // 帧缓存，保存图像中每个像素显示什么颜色

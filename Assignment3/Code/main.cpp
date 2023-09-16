@@ -296,7 +296,7 @@ int main(int argc, const char **argv) {
         }
     }
 
-    rst::rasterizer r(700, 1400);
+    rst::rasterizer r(700, 1400); // 光栅器初始化，注意这里更改了框架，第一个参数为行数，第二个参数为列数，目的是为了和 OpenCV的参数匹配
 
     auto texture_path = "hmap.jpg";
     r.set_texture(Texture(obj_path + texture_path));

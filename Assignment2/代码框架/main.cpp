@@ -79,7 +79,7 @@ int main(int argc, const char** argv)
         filename = std::string(argv[1]);
     }
 
-    rst::rasterizer r(700, 1400); // 光栅器初始化
+    rst::rasterizer r(700, 1400); // 光栅器初始化，注意这里更改了框架，第一个参数为行数，第二个参数为列数，目的是为了和 OpenCV的参数匹配
 
     Eigen::Vector3f eye_pos = {0,0,5}; // 设置观测坐标
 

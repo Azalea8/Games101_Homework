@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <cmath>
 
-#define SSAA false
+#define SSAA true
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions) {
     auto id = get_next_id();
@@ -121,15 +121,16 @@ void rst::rasterizer::draw(pos_buf_id pos_buffer, ind_buf_id ind_buffer, col_buf
 
         rasterize_triangle(t);
 
-        if (SSAA) {
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    Eigen::Vector3f color(0, 0, 0);
-                    for (int i = 0; i < 4; i++)
-                        color += frame_buf_2xSSAA[get_index(x, y)][i];
-                    color /= 4;
-                    set_pixel(Eigen::Vector3f(x, y, 1.0f), color);
-                }
+    }
+
+    if (SSAA) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                Eigen::Vector3f color(0, 0, 0);
+                for (int i = 0; i < 4; i++)
+                    color += frame_buf_2xSSAA[get_index(x, y)][i];
+                color /= 4;
+                set_pixel(Eigen::Vector3f(x, y, 1.0f), color);
             }
         }
     }

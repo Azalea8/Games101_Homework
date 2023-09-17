@@ -164,15 +164,22 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload &payload) {
     for (auto &light: lights) {
         // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
-        auto v = eye_pos - point; // v为出射光方向（指向眼睛）
+        auto v = eye_pos - point; // v从着色点指向眼睛，并不是出射光
         auto l = light.position - point; // l为指向入射光源方向
         auto h = (v + l).normalized(); // h 为半程向量即 v + l 归一化后的单位向量
-        auto r_2 = l.dot(l); //光源到shading point的距离
+        auto r_2 = l.dot(l); //光源到shading point的距离，用于计算光能量的的损失
 
         // a.cwiseProduct(b)将返回一个新的向量，其中第 i个元素等于 a中第 i个元素与 b中第 i个元素的乘积。
+
+        // 环境光照，可以看清物体的形状，但没有立体感
         auto ambient = ka.cwiseProduct(amb_light_intensity);
+
+        // 漫反射，具有一定的立体感
         auto diffuse = kd.cwiseProduct(light.intensity / r_2) * std::max(0.0f, normal.normalized().dot(l.normalized()));
+
+        // 高光，更加贴近现实
         auto specular = ks.cwiseProduct(light.intensity / r_2) * std::pow(std::max(0.0f, normal.normalized().dot(h)), p);
+
         result_color += (ambient + diffuse + specular);
     }
 

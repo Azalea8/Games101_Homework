@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <cmath>
 
-#define SSAA false
+const bool SSAA = true;
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions) {
     auto id = get_next_id();

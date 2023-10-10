@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(Rasterizer)
 
-set(OpenCV_DIR D:/opencv/MinGW-build/install)
+set(OpenCV_DIR D:/Games101_environment/opencv/MinGW-build/install)
 find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)

@@ -211,6 +211,7 @@ void rst::rasterizer::draw(std::vector<Triangle *> &TriangleList) {
         newtri.setColor(1, 148,121.0,92.0);
         newtri.setColor(2, 148,121.0,92.0);*/
 
+        // setColor会将颜色归一化
         newtri.setColor(0, 255, 0.0, 0.0);
         newtri.setColor(1, 255, 0.0, 0.0);
         newtri.setColor(2, 255, 0.0, 0.0);

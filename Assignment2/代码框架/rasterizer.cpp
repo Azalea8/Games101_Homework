@@ -254,7 +254,7 @@ rst::rasterizer::rasterizer(int h, int w) : height(h), width(w) {
     // Z-buffer深度缓存，保存图像中每个像素在三维空间中的深度信息，后续处理遮挡关系
     // Depth-Buffer（深度缓存）有两种：Z-Buffer 和 W-Buffer
     // https://developer.aliyun.com/article/49272
-    // https://www.csie.ntu.edu.tw/~r89004/hive/hsr/page_1.html
+    // https://www.cnblogs.com/aibox222/p/9682657.html
     depth_buf.resize(w * h);
 
     // SSAA超采样，每个像素划分成四个独立的小像素

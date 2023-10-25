@@ -102,8 +102,10 @@ struct light {
 // 可视化纹理信息
 Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) {
     Eigen::Vector3f return_color = {0, 0, 0};
-    if (payload.texture) {
+    if (payload.texture)
+    {
         // TODO: Get the texture value at the texture coordinates of the current fragment
+        return_color = payload.texture->getColor(payload.tex_coords.x(), payload.tex_coords.y()); //关键部分
 
     }
     Eigen::Vector3f texture_color;
@@ -113,10 +115,8 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) 
     Eigen::Vector3f kd = texture_color / 255.f;
     Eigen::Vector3f ks = Eigen::Vector3f(0.7937, 0.7937, 0.7937);
 
-    auto l1 = light{{20,  20,  20},
-                    {500, 500, 500}};
-    auto l2 = light{{-20, 20,  0},
-                    {500, 500, 500}};
+    auto l1 = light{{20, 20, 20}, {500, 500, 500}};
+    auto l2 = light{{-20, 20, 0}, {500, 500, 500}};
 
     std::vector<light> lights = {l1, l2};
     Eigen::Vector3f amb_light_intensity{10, 10, 10};
@@ -130,10 +130,18 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) 
 
     Eigen::Vector3f result_color = {0, 0, 0};
 
-    for (auto &light: lights) {
-        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
+    for (auto& light : lights)
+    {
+        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular*
         // components are. Then, accumulate that result on the *result_color* object.
-
+        auto v = eye_pos - point; //v为出射光方向（指向眼睛）
+        auto l = light.position - point; //l为指向入射光源方向
+        auto h = (v + l).normalized(); //h为半程向量即v+l归一化后的单位向量
+        auto r = l.dot(l); //衰减因子
+        auto ambient = ka.cwiseProduct(amb_light_intensity);
+        auto diffuse = kd.cwiseProduct(light.intensity / r) * std::max(0.0f, normal.normalized().dot(l.normalized()));
+        auto specular = ks.cwiseProduct(light.intensity / r) * std::pow(std::max(0.0f, normal.normalized().dot(h)), p);
+        result_color += (ambient + diffuse + specular);
     }
 
     return result_color * 255.f;

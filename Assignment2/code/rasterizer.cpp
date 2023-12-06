@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <cmath>
 
-#define SSAA true
+#define SSAA false
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions) {
     auto id = get_next_id();
@@ -128,7 +128,7 @@ void rst::rasterizer::draw(pos_buf_id pos_buffer, ind_buf_id ind_buffer, col_buf
             for (int y = 0; y < height; y++) {
                 Eigen::Vector3f color(0, 0, 0);
                 for (int i = 0; i < 4; i++)
-                    color += frame_buf_2xSSAA[get_index(x, y)][i];
+                    color += frame_buf_2xSSAA[get_index(x, y) + i];
                 color /= 4;
                 set_pixel(Eigen::Vector3f(x, y, 1.0f), color);
             }
@@ -177,10 +177,11 @@ void rst::rasterizer::rasterize_triangle(const Triangle &t) {
                             float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() +
                                                    gamma * v[2].z() / v[2].w();
                             z_interpolated *= w_reciprocal;
-                            if (abs(z_interpolated) < depth_buf_2xSSAA[get_index(x, y)][index]) {
+                            int index_ans = get_index(x, y) + index;
+                            if (abs(z_interpolated) < depth_buf_2xSSAA[index_ans]) {
                                 // Eigen::Vector3f point(x + i, y + j, 1.0f);
-                                frame_buf_2xSSAA[get_index(x, y)][index] = t.getColor();
-                                depth_buf_2xSSAA[get_index(x, y)][index] = abs(z_interpolated);
+                                frame_buf_2xSSAA[index_ans] = t.getColor();
+                                depth_buf_2xSSAA[index_ans] = abs(z_interpolated);
                             }
                         }
                         index++;
@@ -229,19 +230,21 @@ void rst::rasterizer::set_projection(const Eigen::Matrix4f &p) {
 void rst::rasterizer::clear(rst::Buffers buff) {
     if ((buff & rst::Buffers::Color) == rst::Buffers::Color) {
         std::fill(frame_buf.begin(), frame_buf.end(), Eigen::Vector3f{0, 0, 0});
-        // 储存小像素的颜色信息
+        std::fill(frame_buf_2xSSAA.begin(), frame_buf_2xSSAA.end(), Eigen::Vector3f{0, 0, 0});
+        /*// 储存小像素的颜色信息
         for (int i = 0; i < frame_buf_2xSSAA.size(); i++) {
             frame_buf_2xSSAA[i].resize(4);
             std::fill(frame_buf_2xSSAA[i].begin(), frame_buf_2xSSAA[i].end(), Eigen::Vector3f{0, 0, 0});
-        }
+        }*/
     }
     if ((buff & rst::Buffers::Depth) == rst::Buffers::Depth) {
         std::fill(depth_buf.begin(), depth_buf.end(), std::numeric_limits<float>::infinity());
-        // 储存小像素的深度信息
+        std::fill(depth_buf_2xSSAA.begin(), depth_buf_2xSSAA.end(), std::numeric_limits<float>::infinity());
+        /*// 储存小像素的深度信息
         for (int i = 0; i < depth_buf_2xSSAA.size(); i++) {
             depth_buf_2xSSAA[i].resize(4);
             std::fill(depth_buf_2xSSAA[i].begin(), depth_buf_2xSSAA[i].end(), std::numeric_limits<float>::infinity());
-        }
+        }*/
     }
 }
 
@@ -258,8 +261,8 @@ rst::rasterizer::rasterizer(int h, int w) : height(h), width(w) {
     depth_buf.resize(w * h);
 
     // SSAA超采样，每个像素划分成四个独立的小像素
-    frame_buf_2xSSAA.resize(w * h);
-    depth_buf_2xSSAA.resize(w * h);
+    frame_buf_2xSSAA.resize(w * h * 4);
+    depth_buf_2xSSAA.resize(w * h * 4);
 }
 
 int rst::rasterizer::get_index(int x, int y) {

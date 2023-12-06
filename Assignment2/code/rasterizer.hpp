@@ -93,8 +93,8 @@ namespace rst
         std::vector<Eigen::Vector3f> frame_buf;
         std::vector<float> depth_buf;
 
-        std::vector<std::vector<Eigen::Vector3f>> frame_buf_2xSSAA;
-        std::vector<std::vector<float>> depth_buf_2xSSAA;
+        std::vector<Eigen::Vector3f> frame_buf_2xSSAA;
+        std::vector<float> depth_buf_2xSSAA;
 
         int get_index(int x, int y);
 

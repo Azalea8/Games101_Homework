@@ -14,14 +14,14 @@
     cmake_minimum_required(VERSION 3.10)
     project(Rasterizer)
 
-    // 这里的路径记得改成你自己的路径
+    # 这里的路径记得改成你自己的路径
     set(OpenCV_DIR D:/OpenCV-MinGW-Build-OpenCV-4.5.2-x64) 
     find_package(OpenCV REQUIRED)
 
     set(CMAKE_CXX_STANDARD 17)
 
-    // mingw32-make install命令执行后安装到了c盘Program File x86
-    // 大概率是一样的路径
+    # mingw32-make install命令执行后安装到了c盘Program File x86
+    # 大概率是一样的路径
     include_directories("C:/Program Files (x86)/Eigen3/include/eigen3")
 
     add_executable(Rasterizer main.cpp rasterizer.hpp rasterizer.cpp Triangle.hpp Triangle.cpp)

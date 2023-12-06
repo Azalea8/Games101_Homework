@@ -101,9 +101,10 @@ int main(int argc, const char** argv) // 主函数带有参数，main函数会�
     // 程序入口
     rst::rasterizer r(700, 700); // 构造光栅器
 
-    Eigen::Vector3f eye_pos = {0, 0, 5}; // 设置观测坐标，这里默认朝向-Z轴观测，不然View变换还会涉及到旋转
+    Eigen::Vector3f eye_pos = {0, 0, 5}; // 设置观测坐标，这里默认朝向-Z轴观测，不然 View变换还会涉及到旋转
 
-    std::vector<Eigen::Vector3f> pos{{2, 1, -2}, {1, 2, -2}, {-2, 1, -2}}; // 所有三角形的顶点坐标
+    // 所有三角形的顶点坐标。这里分了组，在 opengl中无需分组，EBO一维数组一把梭，EAO负责解释哪些数据是做什么的
+    std::vector<Eigen::Vector3f> pos{{2, 1, -2}, {1, 2, -2}, {-2, 1, -2}};
 
     std::vector<Eigen::Vector3i> ind{{0, 1, 2}, }; // 对顶点进行分组, 每组的三个值对应一个三角形
 
@@ -135,7 +136,7 @@ int main(int argc, const char** argv) // 主函数带有参数，main函数会�
     while (key != 27) {
         r.clear(rst::Buffers::Color | rst::Buffers::Depth); // 清除帧缓存的图像，准备重新绘制
 
-        r.set_model(get_model_matrix(angle)); // 向光栅器传入新的Model变换矩阵
+        r.set_model(get_model_matrix(angle)); // 向光栅器传入新的 Model变换矩阵
         r.set_view(get_view_matrix(eye_pos)); // 向光栅器传入新的View变换矩阵
         r.set_projection(get_projection_matrix(60, 1, 0.1, 50)); // 向光栅器传入新的Projection变换矩阵
 

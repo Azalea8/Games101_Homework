@@ -143,15 +143,15 @@ void rst::rasterizer::draw(rst::pos_buf_id pos_buffer, rst::ind_buf_id ind_buffe
 
     // 从顶点缓存中读取当前帧所需要绘制的三角形信息
 
-    // pos_id为唯一标识, pos_buffer为结构体封装pos_id, pos_buf作为Map，对应光栅器缓存的三角形数据
+    // pos_id为唯一标识, pos_buffer为结构体封装 pos_id, pos_buf作为 Map，对应光栅器缓存的三角形数据
     auto& buf = pos_buf[pos_buffer.pos_id];
-    // 与顶点坐标类似，用ind来分组构造有序的三角形
+    // 与顶点坐标类似，用 ind来分组构造有序的三角形
     auto& ind = ind_buf[ind_buffer.ind_id];
 
     float f1 = (100 - 0.1) / 2.0;
     float f2 = (100 + 0.1) / 2.0;
 
-    Eigen::Matrix4f mvp = projection * view * model; // 做MVP变换，矩阵运算具有结合律，所以可以先算
+    Eigen::Matrix4f mvp = projection * view * model; // 做 MVP变换，矩阵运算具有结合律，所以可以先算
 
     for (auto& i : ind) // 三角形原先分过组，每组一次变换，一一对应
     {
@@ -239,6 +239,7 @@ rst::rasterizer::rasterizer(int w, int h) : width(w), height(h)
 
 int rst::rasterizer::get_index(int x, int y)
 {
+    // opencv的坐标是传统的二维数组，这里我们的像素是高中传统的坐标系
     return (height-y)*width + x;
 }
 

@@ -77,6 +77,38 @@ void bezier(const std::vector<cv::Point2f> &control_points, cv::Mat &window)
     }
 }
 
+// 计算阶乘
+int factorial(int n)
+{
+    int fc=1;
+    for(int i=1;i<=n;++i) fc *= i;
+    return fc;
+}
+
+// 计算组合数
+/*
+    从 n个不同元素中取出 m ( m ≤ n )个元素的所有组合的个数，叫做 n个不同元素中取出 m个元素的组合数。用符号 c(m,n) 表示。
+    组合数公式：c(m,n) = n! / (m! * (n-m)!)
+    性质：c(n,m) = c(n,m-n)
+    递推公式：c(n,m) = c(n-1,m-1) + c(n-1,m)
+*/
+int combo(int m,int n)
+{
+    int com = factorial(n) / (factorial(m) * factorial(n-m));
+    return com;
+}
+
+void bezier_combo(const std::vector<cv::Point2f> &points, cv::Mat &window) {
+    for (double t = 0.0; t <= 1.0; t += 0.001) {
+        cv::Point2f point(0, 0);
+        for (size_t i = 0;i < points.size();i++) {
+            point += combo(i, NUM - 1) * std::pow((1 - t), NUM - 1 - i) * std::pow(t, i) * points[i];
+        }
+        // 曲线颜色设置为红色，OpenCV为 BGR
+        window.at<cv::Vec3b>(point.y, point.x)[2] = 255;
+    }
+}
+
 int main() 
 {
     cv::Mat window = cv::Mat(700, 700, CV_8UC3, cv::Scalar(0));
@@ -96,7 +128,8 @@ int main()
         if (control_points.size() == NUM)
         {
             // naive_bezier(control_points, window);
-            bezier(control_points, window);
+            // bezier(control_points, window);
+            bezier_combo(control_points, window);
 
             cv::imshow("Bezier Curve", window);
             cv::imwrite("my_bezier_curve.png", window);

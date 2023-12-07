@@ -4,8 +4,11 @@
 #include "Scene.hpp"
 #include <optional>
 
-inline float deg2rad(const float &deg)
-{ return deg * M_PI/180.0; }
+// 内联函数,减少开销
+// https://zhuanlan.zhihu.com/p/151995167
+inline float deg2rad(const float &deg){
+    return deg * M_PI/180.0;
+}
 
 // Compute reflection direction
 Vector3f reflect(const Vector3f &I, const Vector3f &N)
@@ -218,49 +221,24 @@ void Renderer::Render(const Scene& scene)
     // Use this variable as the eye position to start your rays.
     Vector3f eye_pos(0);
     int m = 0;
-    for (int j = 0; j < scene.height; ++j)
+    // 这里更改了框架，个人习惯 i遍历行，j遍历列
+    for (int i = 0; i < scene.height; ++i)
     {
-        for (int i = 0; i < scene.width; ++i)
+        for (int j = 0; j < scene.width; ++j)
         {
             // generate primary ray direction
-            // Screen space to NDC space
-            float nx = (i + 0.5f) * 2 / scene.width - 1.0f;
-            float ny = (j + 0.5f) * 2 / scene.height - 1.0f;
+            float x = ((j + 0.5f) * 2 / scene.width - 1.0f) * imageAspectRatio * scale;
+            float y = (1.0f - (i + 0.5f) * 2 / scene.height) * scale;
+            // TODO: Find the x and y positions of the current pixel to get the direction
+            // vector that passes through it.
+            // Also, don't forget to multiply both of them with the variable *scale*, and
+            // x (horizontal) variable with the *imageAspectRatio*
 
-            // NDC space to world space
-
-            // Project matrix
-            /*
-            *   [ n/r ,0   ,0       ,0      ]
-            *   [ 0   ,n/t ,0       ,0      ]
-            *   [ 0   ,0   ,n+f/n-f ,2nf/f-n]
-            *   [ 0   ,0   ,1       ,0      ]
-            */
-
-            //
-            // 在投影矩阵中 x 的系数为 n/r
-            // 在投影矩阵中 y 的系数为 n/t
-            // 现在要做一个逆操作，所以我们用 NDC空间的坐标分别除以投影矩阵中的系数
-            // x = nx / n / r
-            // y = ny / n / t
-            // 其中 n(相机到近投影面距离为 默认情况下为1）
-            // =>
-            // x = nx * r
-            // y = ny * t
-            // 其中 r = tan(fov/2)*aspect * |n|， t=tan(fov/2) * |n| , |n| = 1
-            // 所以可得,世界空间中坐标为
-            // x = nx * tan(fov/2)*aspect
-            // y = ny * tan(fov/2)*aspect
-
-            float x = nx * scale * imageAspectRatio;
-            float y = -ny * scale;
-
-
-            Vector3f dir = Vector3f(x, y, -1); // Don't forget to normalize this direction!
-            dir = normalize(dir);
+            // Vector3f(x, y, -1) 说明 scene在 z = -1，故 z-near距离人眼距离为 1
+            Vector3f dir = normalize(Vector3f(x, y, -1)); // Don't forget to normalize this direction!
             framebuffer[m++] = castRay(eye_pos, dir, scene, 0);
         }
-        UpdateProgress(j / (float)scene.height);
+        UpdateProgress(i / (float)scene.height);
     }
 
     // save framebuffer to file

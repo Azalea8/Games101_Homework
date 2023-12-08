@@ -72,16 +72,16 @@ float fresnel(const Vector3f &I, const Vector3f &N, const float &ior)
 }
 
 // [comment]
-// Returns true if the ray intersects an object, false otherwise.
+// 如果射线与物体相交，则返回 true，否则返回 false。
 //
-// \param orig is the ray origin
-// \param dir is the ray direction
-// \param objects is the list of objects the scene contains
-// \param[out] tNear contains the distance to the cloesest intersected object.
-// \param[out] index stores the index of the intersect triangle if the interesected object is a mesh.
-// \param[out] uv stores the u and v barycentric coordinates of the intersected point
-// \param[out] *hitObject stores the pointer to the intersected object (used to retrieve material information, etc.)
-// \param isShadowRay is it a shadow ray. We can return from the function sooner as soon as we have found a hit.
+// \param orig是射线的起点
+// \param dir是射线的方向
+// \param objects是场景中包含的物体列表
+// \param[out] tNear存储到最近相交物体的距离。
+// \param[out] index存储相交物体为网格时的相交三角形的索引。
+// \param[out] uv存储相交点的 u和v重心坐标。
+// \param[out] *hitObject存储指向相交物体的指针（用于获取材质信息等）。
+// \param isShadowRay是否为阴影射线。如果我们找到了一个相交点，我们可以更早地从函数中返回。
 // [/comment]
 std::optional<hit_payload> trace(
         const Vector3f &orig, const Vector3f &dir,
@@ -109,20 +109,14 @@ std::optional<hit_payload> trace(
 }
 
 // [comment]
-// Implementation of the Whitted-style light transport algorithm (E [S*] (D|G) L)
+// 实现 Whitted风格的光传输算法（E [S*] (D|G) L）
 //
-// This function is the function that compute the color at the intersection point
-// of a ray defined by a position and a direction. Note that thus function is recursive (it calls itself).
+// 这个函数计算一个由位置和方向定义的射线在交点处的颜色。注意，这个函数是递归的（它调用自身）。
 //
-// If the material of the intersected object is either reflective or reflective and refractive,
-// then we compute the reflection/refraction direction and cast two new rays into the scene
-// by calling the castRay() function recursively. When the surface is transparent, we mix
-// the reflection and refraction color using the result of the fresnel equations (it computes
-// the amount of reflection and refraction depending on the surface normal, incident view direction
-// and surface refractive index).
+// 如果交点处物体的材质是反射性的或者既有反射性又有折射性，那么我们计算反射/折射方向，并通过递归调用castRay()函数在场景中投射两条新的射线。
+// 当表面是透明的时候，我们使用菲涅尔方程的结果（它根据表面法线、入射视线方向和表面折射率计算反射和折射的比例）来混合反射和折射的颜色。
 //
-// If the surface is diffuse/glossy we use the Phong illumation model to compute the color
-// at the intersection point.
+// 如果表面是漫反射/高光的，我们使用Phong光照模型来计算交点处的颜色。
 // [/comment]
 Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, int depth)
 {
@@ -131,26 +125,34 @@ Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, 
     }
 
     Vector3f hitColor = scene.backgroundColor;
+
+    // 如果光线撞击到了之前我们加入到场景中的物体，则进入分支
     if (auto payload = trace(orig, dir, scene.get_objects()); payload)
     {
         Vector3f hitPoint = orig + dir * payload->tNear;
         Vector3f N; // normal
         Vector2f st; // st coordinates
         payload -> hit_obj -> getSurfaceProperties(hitPoint, dir, payload->index, payload->uv, N, st);
-        switch (payload->hit_obj->materialType) {
+        switch (payload -> hit_obj -> materialType) {
             case REFLECTION_AND_REFRACTION:
             {
-                Vector3f reflectionDirection = normalize(reflect(dir, N));
-                Vector3f refractionDirection = normalize(refract(dir, N, payload->hit_obj->ior));
-                Vector3f reflectionRayOrig = (dotProduct(reflectionDirection, N) < 0) ?
+                // 反射光
+                Vector3f reflection_Direction = normalize(reflect(dir, N));
+
+                // 折射光
+                Vector3f refraction_Direction = normalize(refract(dir, N, payload -> hit_obj->ior));
+
+                // 判断光线是从内部射向表面，还是外部射向表面
+                // 这个偏移量的目的是避免光线与命中点所在的表面相交
+                Vector3f reflectionRay_Orig = (dotProduct(reflection_Direction, N) < 0) ?
                                              hitPoint - N * scene.epsilon :
                                              hitPoint + N * scene.epsilon;
-                Vector3f refractionRayOrig = (dotProduct(refractionDirection, N) < 0) ?
+                Vector3f refractionRay_Orig = (dotProduct(refraction_Direction, N) < 0) ?
                                              hitPoint - N * scene.epsilon :
                                              hitPoint + N * scene.epsilon;
-                Vector3f reflectionColor = castRay(reflectionRayOrig, reflectionDirection, scene, depth + 1);
-                Vector3f refractionColor = castRay(refractionRayOrig, refractionDirection, scene, depth + 1);
-                float kr = fresnel(dir, N, payload->hit_obj->ior);
+                Vector3f reflectionColor = castRay(reflectionRay_Orig, reflection_Direction, scene, depth + 1);
+                Vector3f refractionColor = castRay(refractionRay_Orig, refraction_Direction, scene, depth + 1);
+                float kr = fresnel(dir, N, payload -> hit_obj -> ior);
                 hitColor = reflectionColor * kr + refractionColor * (1 - kr);
                 break;
             }
@@ -189,9 +191,9 @@ Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, 
                     bool inShadow = shadow_res && (shadow_res->tNear * shadow_res->tNear < lightDistance2);
 
                     lightAmt += inShadow ? 0 : light->intensity * LdotN;
-                    Vector3f reflectionDirection = reflect(-lightDir, N);
+                    Vector3f reflection_Direction = reflect(-lightDir, N);
 
-                    specularColor += powf(std::max(0.f, -dotProduct(reflectionDirection, dir)),
+                    specularColor += powf(std::max(0.f, -dotProduct(reflection_Direction, dir)),
                         payload->hit_obj->specularExponent) * light->intensity;
                 }
 

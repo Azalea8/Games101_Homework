@@ -21,41 +21,41 @@ public:
         , y(yy)
         , z(zz)
     {}
-    Vector3f operator*(const float& r) const
+    Vector3f operator * (const float& r) const
     {
         return Vector3f(x * r, y * r, z * r);
     }
-    Vector3f operator/(const float& r) const
+    Vector3f operator / (const float& r) const
     {
         return Vector3f(x / r, y / r, z / r);
     }
 
-    Vector3f operator*(const Vector3f& v) const
+    Vector3f operator * (const Vector3f& v) const
     {
         return Vector3f(x * v.x, y * v.y, z * v.z);
     }
-    Vector3f operator-(const Vector3f& v) const
+    Vector3f operator - (const Vector3f& v) const
     {
         return Vector3f(x - v.x, y - v.y, z - v.z);
     }
-    Vector3f operator+(const Vector3f& v) const
+    Vector3f operator + (const Vector3f& v) const
     {
         return Vector3f(x + v.x, y + v.y, z + v.z);
     }
-    Vector3f operator-() const
+    Vector3f operator - () const
     {
         return Vector3f(-x, -y, -z);
     }
-    Vector3f& operator+=(const Vector3f& v)
+    Vector3f& operator += (const Vector3f& v)
     {
         x += v.x, y += v.y, z += v.z;
         return *this;
     }
-    friend Vector3f operator*(const float& r, const Vector3f& v)
+    friend Vector3f operator * (const float& r, const Vector3f& v)
     {
         return Vector3f(v.x * r, v.y * r, v.z * r);
     }
-    friend std::ostream& operator<<(std::ostream& os, const Vector3f& v)
+    friend std::ostream& operator << (std::ostream& os, const Vector3f& v)
     {
         return os << v.x << ", " << v.y << ", " << v.z;
     }

@@ -7,10 +7,8 @@
 bool rayTriangleIntersect(const Vector3f& v0, const Vector3f& v1, const Vector3f& v2, const Vector3f& orig,
                           const Vector3f& dir, float& tnear, float& u, float& v)
 {
-    // TODO: Implement this function that tests whether the triangle
-    // that's specified bt v0, v1 and v2 intersects with the ray (whose
-    // origin is *orig* and direction is *dir*)
-    // Also don't forget to update tnear, u and v.
+    // 判断光线是否与三角形相交
+    // 详见 Lecture-13 pdf P29
     Vector3f e1 = v1 - v0;
     Vector3f e2 = v2 - v0;
     Vector3f s0 = orig - v0;
@@ -65,7 +63,7 @@ public:
                 uv.x = u;
                 uv.y = v;
                 index = k;
-                intersect |= true;
+                intersect = true;
             }
         }
 
@@ -84,13 +82,22 @@ public:
         const Vector2f& st0 = stCoordinates[vertexIndex[index * 3]];
         const Vector2f& st1 = stCoordinates[vertexIndex[index * 3 + 1]];
         const Vector2f& st2 = stCoordinates[vertexIndex[index * 3 + 2]];
+        // 纹理坐标重心插值
         st = st0 * (1 - uv.x - uv.y) + st1 * uv.x + st2 * uv.y;
     }
 
+    // 返回真实的纹理颜色
     Vector3f evalDiffuseColor(const Vector2f& st) const override
     {
+        // 控制棋盘格的密度
         float scale = 5;
+
+        // 检测 st该点落的位置的颜色，非 0即 1
+        // 这里画个 [0,1]^2 的纹理图就明白了
+        // st.x, st.y 对应纹理图的坐标
         float pattern = (fmodf(st.x * scale, 1) > 0.5) ^ (fmodf(st.y * scale, 1) > 0.5);
+
+        // 这里 pattern非 0即 1，这里没必要用线性插值函数来做
         return lerp(Vector3f(0.815, 0.235, 0.031), Vector3f(0.937, 0.937, 0.231), pattern);
     }
 

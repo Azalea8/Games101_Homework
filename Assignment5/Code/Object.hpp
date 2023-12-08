@@ -8,7 +8,7 @@ class Object
 public:
     Object()
         : materialType(DIFFUSE_AND_GLOSSY)
-        , ior(1.3)
+        , ior(1.6)
         , Kd(0.8)
         , Ks(0.2)
         , diffuseColor(0.2)
@@ -29,7 +29,7 @@ public:
 
     // material properties
     MaterialType materialType;
-    float ior;
+    float ior; // 折射率
     float Kd, Ks;
     Vector3f diffuseColor;
     float specularExponent;

@@ -71,18 +71,17 @@ float fresnel(const Vector3f &I, const Vector3f &N, const float &ior)
     // kt = 1 - kr;
 }
 
-// [comment]
+
 // 如果射线与物体相交，则返回 true，否则返回 false。
 //
-// \param orig是射线的起点
-// \param dir是射线的方向
-// \param objects是场景中包含的物体列表
-// \param[out] tNear存储到最近相交物体的距离。
-// \param[out] index存储相交物体为网格时的相交三角形的索引。
-// \param[out] uv存储相交点的 u和v重心坐标。
-// \param[out] *hitObject存储指向相交物体的指针（用于获取材质信息等）。
-// \param isShadowRay是否为阴影射线。如果我们找到了一个相交点，我们可以更早地从函数中返回。
-// [/comment]
+// orig是射线的起点
+// dir是射线的方向
+// objects是场景中包含的物体列表
+// tNear存储到最近相交物体的距离。
+// index存储相交物体为网格时的相交三角形的索引。
+// uv存储相交点的 u和v重心坐标。
+// *hitObject存储指向相交物体的指针（用于获取材质信息等）。
+// isShadowRay是否为阴影射线。如果我们找到了一个相交点，我们可以更早地从函数中返回。
 std::optional<hit_payload> trace(
         const Vector3f &orig, const Vector3f &dir,
         const std::vector<std::unique_ptr<Object>> &objects)
@@ -108,16 +107,14 @@ std::optional<hit_payload> trace(
     return payload;
 }
 
-// [comment]
+
 // 实现 Whitted风格的光传输算法（E [S*] (D|G) L）
-//
 // 这个函数计算一个由位置和方向定义的射线在交点处的颜色。注意，这个函数是递归的（它调用自身）。
 //
 // 如果交点处物体的材质是反射性的或者既有反射性又有折射性，那么我们计算反射/折射方向，并通过递归调用castRay()函数在场景中投射两条新的射线。
 // 当表面是透明的时候，我们使用菲涅尔方程的结果（它根据表面法线、入射视线方向和表面折射率计算反射和折射的比例）来混合反射和折射的颜色。
 //
 // 如果表面是漫反射/高光的，我们使用Phong光照模型来计算交点处的颜色。
-// [/comment]
 Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, int depth)
 {
     if (depth > scene.maxDepth) {
@@ -150,8 +147,11 @@ Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, 
                 Vector3f refractionRay_Orig = (dotProduct(refraction_Direction, N) < 0) ?
                                              hitPoint - N * scene.epsilon :
                                              hitPoint + N * scene.epsilon;
+
                 Vector3f reflectionColor = castRay(reflectionRay_Orig, reflection_Direction, scene, depth + 1);
                 Vector3f refractionColor = castRay(refractionRay_Orig, refraction_Direction, scene, depth + 1);
+
+                // 使用了菲涅尔反射系数 kr来加权反射颜色和折射颜色
                 float kr = fresnel(dir, N, payload -> hit_obj -> ior);
                 hitColor = reflectionColor * kr + refractionColor * (1 - kr);
                 break;
@@ -168,36 +168,42 @@ Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, 
             }
             default:
             {
-                // [comment]
-                // We use the Phong illumation model int the default case. The phong model
-                // is composed of a diffuse and a specular reflection component.
-                // [/comment]
+                // 在默认情况下，我们使用 Phong光照模型。Phong模型由漫反射和镜面反射两个组成部分组成。
                 Vector3f lightAmt = 0, specularColor = 0;
                 Vector3f shadowPointOrig = (dotProduct(dir, N) < 0) ?
                                            hitPoint + N * scene.epsilon :
                                            hitPoint - N * scene.epsilon;
-                // [comment]
-                // Loop over all lights in the scene and sum their contribution up
-                // We also apply the lambert cosine law
-                // [/comment]
-                for (auto& light : scene.get_lights()) {
-                    Vector3f lightDir = light->position - hitPoint;
-                    // square of the distance between hitPoint and the light
-                    float lightDistance2 = dotProduct(lightDir, lightDir);
-                    lightDir = normalize(lightDir);
-                    float LdotN = std::max(0.f, dotProduct(lightDir, N));
-                    // is the point in shadow, and is the nearest occluding object closer to the object than the light itself?
-                    auto shadow_res = trace(shadowPointOrig, lightDir, scene.get_objects());
-                    bool inShadow = shadow_res && (shadow_res->tNear * shadow_res->tNear < lightDistance2);
 
-                    lightAmt += inShadow ? 0 : light->intensity * LdotN;
+                // 遍历场景中的所有光源，并将它们的贡献相加
+                // 我们还应用Lambert余弦定律
+                for (auto& light : scene.get_lights()) {
+                    Vector3f lightDir = light -> position - hitPoint;
+                    // square of the distance between hitPoint and the light
+                    float light_Distance_2 = dotProduct(lightDir, lightDir);
+                    lightDir = normalize(lightDir);
+
+                    float LdotN = std::max(0.f, dotProduct(lightDir, N));
+
+                    // 从该点射向光源
+                    // 如果碰撞到了场景中的其他物体 && 距离比该点到光源的距离更近，则说明该点处于阴影处
+                    auto shadow_res = trace(shadowPointOrig, lightDir, scene.get_objects());
+                    bool inShadow = shadow_res && (shadow_res -> tNear * shadow_res -> tNear < light_Distance_2);
+
+                    // Phong光照模型的漫反射相关系数
+                    lightAmt += inShadow ? 0 : light -> intensity * LdotN;
+
+                    // 反射，注意 lightDir调转方向 (原来是从 pos指向光源 )
                     Vector3f reflection_Direction = reflect(-lightDir, N);
 
+                    // Phong光照模型，镜面反射的颜色贡献
                     specularColor += powf(std::max(0.f, -dotProduct(reflection_Direction, dir)),
                         payload->hit_obj->specularExponent) * light->intensity;
                 }
 
-                hitColor = lightAmt * payload->hit_obj->evalDiffuseColor(st) * payload->hit_obj->Kd + specularColor * payload->hit_obj->Ks;
+                // payload->hit_obj->Kd, payload->hit_obj->Ks 用来线性插值
+                // 前者是漫反射，后者是镜面反射
+                hitColor = (lightAmt * payload->hit_obj->evalDiffuseColor(st) * payload->hit_obj->Kd)
+                        + (specularColor * payload->hit_obj->Ks);
                 break;
             }
         }
@@ -206,11 +212,10 @@ Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, 
     return hitColor;
 }
 
-// [comment]
-// The main render function. This where we iterate over all pixels in the image, generate
-// primary rays and cast these rays into the scene. The content of the framebuffer is
-// saved to a file.
-// [/comment]
+
+// 主要的渲染函数。
+// 在这里，我们遍历图像中的所有像素，生成主要光线并将这些光线投射到场景中。
+// 帧缓冲区的内容被保存到文件中。
 void Renderer::Render(const Scene& scene)
 {
     std::vector<Vector3f> framebuffer(scene.width * scene.height);
@@ -231,13 +236,20 @@ void Renderer::Render(const Scene& scene)
             float y = (1.0f - 2 * ((i + 0.5f) / scene.height)) * 1 * scale;
 
             // Vector3f(x, y, -1) 说明 scene在 z = -1，故 z-near距离人眼距离为 1
-            Vector3f dir = normalize(Vector3f(x, y, -1)); // Don't forget to normalize this direction!
+            // Don't forget to normalize this direction!
+            Vector3f dir = normalize(Vector3f(x, y, -1));
+
+            // 这里光线追踪返回该像素点对应的颜色，记录到帧缓存中
             framebuffer[m++] = castRay(eye_pos, dir, scene, 0);
         }
+        // 这里是用来显示进度条，与项目无关
         UpdateProgress(i / (float)scene.height);
     }
 
     // save framebuffer to file
+    // 放弃使用 opencv库，反正我们只需维护 scene.height * scene.width大小的 Vector3f数组，
+    // 不考虑实时显示的话，opencv对于我们来说太鸡肋
+    // .ppm后缀的图像，windows下无法直接打开，vscode有个插件可以查看
     FILE* fp = fopen("binary.ppm", "wb");
     (void)fprintf(fp, "P6\n%d %d\n255\n", scene.width, scene.height);
     for (auto i = 0; i < scene.height * scene.width; ++i) {

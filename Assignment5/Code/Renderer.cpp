@@ -85,7 +85,7 @@ float fresnel(const Vector3f &I, const Vector3f &N, const float &ior)
 // [/comment]
 std::optional<hit_payload> trace(
         const Vector3f &orig, const Vector3f &dir,
-        const std::vector<std::unique_ptr<Object> > &objects)
+        const std::vector<std::unique_ptr<Object>> &objects)
 {
     float tNear = kInfinity;
     std::optional<hit_payload> payload;
@@ -94,7 +94,7 @@ std::optional<hit_payload> trace(
         float tNearK = kInfinity;
         uint32_t indexK;
         Vector2f uvK;
-        if (object->intersect(orig, dir, tNearK, indexK, uvK) && tNearK < tNear)
+        if (object -> intersect(orig, dir, tNearK, indexK, uvK) && tNearK < tNear)
         {
             payload.emplace();
             payload->hit_obj = object.get();
@@ -124,9 +124,7 @@ std::optional<hit_payload> trace(
 // If the surface is diffuse/glossy we use the Phong illumation model to compute the color
 // at the intersection point.
 // [/comment]
-Vector3f castRay(
-        const Vector3f &orig, const Vector3f &dir, const Scene& scene,
-        int depth)
+Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, int depth)
 {
     if (depth > scene.maxDepth) {
         return Vector3f(0.0,0.0,0.0);
@@ -138,7 +136,7 @@ Vector3f castRay(
         Vector3f hitPoint = orig + dir * payload->tNear;
         Vector3f N; // normal
         Vector2f st; // st coordinates
-        payload->hit_obj->getSurfaceProperties(hitPoint, dir, payload->index, payload->uv, N, st);
+        payload -> hit_obj -> getSurfaceProperties(hitPoint, dir, payload->index, payload->uv, N, st);
         switch (payload->hit_obj->materialType) {
             case REFLECTION_AND_REFRACTION:
             {
@@ -227,12 +225,8 @@ void Renderer::Render(const Scene& scene)
         for (int j = 0; j < scene.width; ++j)
         {
             // generate primary ray direction
-            float x = ((j + 0.5f) * 2 / scene.width - 1.0f) * imageAspectRatio * scale;
-            float y = (1.0f - (i + 0.5f) * 2 / scene.height) * scale;
-            // TODO: Find the x and y positions of the current pixel to get the direction
-            // vector that passes through it.
-            // Also, don't forget to multiply both of them with the variable *scale*, and
-            // x (horizontal) variable with the *imageAspectRatio*
+            float x = (2 * ((j + 0.5f) / scene.width) - 1.0f) * imageAspectRatio * 1 * scale;
+            float y = (1.0f - 2 * ((i + 0.5f) / scene.height)) * 1 * scale;
 
             // Vector3f(x, y, -1) 说明 scene在 z = -1，故 z-near距离人眼距离为 1
             Vector3f dir = normalize(Vector3f(x, y, -1)); // Don't forget to normalize this direction!

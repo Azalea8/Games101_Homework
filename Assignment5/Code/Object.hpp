@@ -6,6 +6,7 @@
 class Object
 {
 public:
+    // Sphere 和 MeshTriangle的父类
     Object()
         : materialType(DIFFUSE_AND_GLOSSY)
         , ior(1.6)

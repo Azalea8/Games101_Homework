@@ -45,7 +45,7 @@ class Bounds3
         return 2 * (d.x * d.y + d.x * d.z + d.y * d.z);
     }
 
-    Vector3f Centroid() { return 0.5 * pMin + 0.5 * pMax; }
+    Vector3f Centroid() { return 0.5 * (pMin + pMax); }
     Bounds3 Intersect(const Bounds3& b)
     {
         return Bounds3(Vector3f(fmax(pMin.x, b.pMin.x), fmax(pMin.y, b.pMin.y),
@@ -98,6 +98,8 @@ inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
     // TODO test if ray bound intersects
 
     const auto& origin = ray.origin;
+
+    // 包围盒的进出时间
     float tEnter = -std::numeric_limits<float>::infinity();
     float tExit = std::numeric_limits<float>::infinity();
     for (int i = 0; i < 3; i++)
@@ -111,6 +113,7 @@ inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
         tEnter = std::max(min, tEnter);
         tExit = std::min(max, tExit);
     }
+    // 光线在包围盒呆过的条件
     return tEnter < tExit && tExit >= 0;
 }
 

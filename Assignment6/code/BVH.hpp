@@ -57,7 +57,8 @@ public:
     // BVHBuildNode Public Methods
     BVHBuildNode(){
         bounds = Bounds3();
-        left = nullptr;right = nullptr;
+        left = nullptr;
+        right = nullptr;
         object = nullptr;
     }
 };

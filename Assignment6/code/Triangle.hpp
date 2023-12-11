@@ -64,9 +64,8 @@ public:
                               const uint32_t& index, const Vector2f& uv,
                               Vector3f& N, Vector2f& st) const override
     {
-        N = normal;
-        //        throw std::runtime_error("triangle::getSurfaceProperties not
-        //        implemented.");
+
+
     }
     Vector3f evalDiffuseColor(const Vector2f&) const override;
     Bounds3 getBounds() override;
@@ -77,29 +76,35 @@ class MeshTriangle : public Object
 public:
     MeshTriangle(const std::string& filename)
     {
+        // 利用第三方库加载模型
         objl::Loader loader;
         loader.LoadFile(filename);
 
         assert(loader.LoadedMeshes.size() == 1);
         auto mesh = loader.LoadedMeshes[0];
 
+        // min_vert 和 max_vert计算一大堆三角形的包围盒
         Vector3f min_vert = Vector3f{std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity()};
 
-        Vector3f max_vert = Vector3f{-std::numeric_limits<float>::infinity(),
-                                     -std::numeric_limits<float>::infinity(),
-                                     -std::numeric_limits<float>::infinity()};
+        Vector3f max_vert = Vector3f{- std::numeric_limits<float>::infinity(),
+                                     - std::numeric_limits<float>::infinity(),
+                                     - std::numeric_limits<float>::infinity()};
 
+        // 遍历所有三角形
         for (int i = 0; i < mesh.Vertices.size(); i += 3) {
+            // 用来储存一个三角形
             std::array<Vector3f, 3> face_vertices;
             for (int j = 0; j < 3; j++) {
                 auto vert = Vector3f(mesh.Vertices[i + j].Position.X,
                                      mesh.Vertices[i + j].Position.Y,
                                      mesh.Vertices[i + j].Position.Z) *
                             60.f;
+
                 face_vertices[j] = vert;
 
+                // 更新包围盒
                 min_vert = Vector3f(std::min(min_vert.x, vert.x),
                                     std::min(min_vert.y, vert.y),
                                     std::min(min_vert.z, vert.z));
@@ -109,6 +114,7 @@ public:
                                     std::max(max_vert.z, vert.z));
             }
 
+            // 三角形的材质信息
             auto new_mat =
                 new Material(MaterialType::DIFFUSE_AND_GLOSSY,
                              Vector3f(0.5, 0.5, 0.5), Vector3f(0, 0, 0));
@@ -116,15 +122,19 @@ public:
             new_mat->Ks = 0.0;
             new_mat->specularExponent = 0;
 
+            // 单个三角形放入 triangles中
             triangles.emplace_back(face_vertices[0], face_vertices[1],face_vertices[2], new_mat);
         }
 
+        // 遍历完所有三角形，包围盒最小化
         bounding_box = Bounds3(min_vert, max_vert);
 
         std::vector<Object*> ptrs;
         for (auto& tri : triangles)
             ptrs.push_back(&tri);
 
+        // 对所有三角形进行 BVH划分
+        // 虽然 main.cpp后面又一次 scene.buildBVH() 但是它是把一堆三角形看作一个 Object，三角形内部还需继续细分
         bvh = new BVHAccel(ptrs);
     }
 
@@ -228,7 +238,7 @@ inline Intersection Triangle::getIntersection(Ray ray)
     if (tnear >= 0 && u >= 0 && v >= 0 && (u + v) <= 1)
     {
         inter.happened = true;
-        inter.coords = Vector3f(tnear, u, v);
+        inter.coords = Vector3f(1 - u - v , u, v);
         inter.normal = normal;
         inter.m = m;
         inter.obj = this;

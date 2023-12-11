@@ -116,17 +116,17 @@ Vector3f castRay(const Vector3f &orig, const Vector3f &dir, const Scene& scene, 
     // 否则该像素块为背景
     if (auto payload = trace(orig, dir, scene.get_objects()); payload)
     {
-        // 有了之前通过 trace函数得到的碰撞信息，算出碰撞点
+        // 通过之前通过 trace函数得到的碰撞信息，算出碰撞点
         Vector3f hitPoint = orig + dir * payload->tNear;
 
         Vector3f N; // 法线
         Vector2f st; // 纹理坐标
 
-        // payload中保存了碰撞的是那个物体
+        // payload中保存了碰撞的是物体相关信息
         // getSurfaceProperties用来求得碰撞点在物体表面的其他信息，不同物体实现不同
         payload -> hit_obj -> getSurfaceProperties(hitPoint, dir, payload->index, payload->uv, N, st);
 
-        // 碰撞物体材质不同
+        // 碰撞物体材质不同，不同的材质不同的算法
         switch (payload -> hit_obj -> materialType) {
             // 既能折射又能反射
             case REFLECTION_AND_REFRACTION:

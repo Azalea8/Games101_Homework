@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.hpp"
 
+// 碰撞信息
 // tNear存储到最近相交物体的距离。
 // index存储相交物体为网格时的相交三角形的索引。
 // uv存储相交点的 u和 v重心坐标。

@@ -22,22 +22,20 @@ void Renderer::Render(const Scene& scene)
     float imageAspectRatio = scene.width / (float)scene.height;
     Vector3f eye_pos(-1, 5, 10);
     int m = 0;
-    for (uint32_t j = 0; j < scene.height; ++j) {
-        for (uint32_t i = 0; i < scene.width; ++i) {
-            // generate primary ray direction
-            float x = (2 * (i + 0.5) / (float)scene.width - 1) *
-                      imageAspectRatio * scale;
-            float y = (1 - 2 * (j + 0.5) / (float)scene.height) * scale;
-            // TODO: Find the x and y positions of the current pixel to get the
-            // direction
-            //  vector that passes through it.
-            // Also, don't forget to multiply both of them with the variable
-            // *scale*, and x (horizontal) variable with the *imageAspectRatio*
+    for (uint32_t i = 0; i < scene.height; ++i) {
+        for (uint32_t j = 0; j < scene.width; ++j) {
+            // 坐标系转换
+            float x = (2 * ((j + 0.5f) / scene.width) - 1.0f) * imageAspectRatio * 1 * scale;
+            float y = (1.0f - 2 * ((i + 0.5f) / scene.height)) * 1 * scale;
 
-            // Don't forget to normalize this direction!
+
+            Vector3f dir = Vector3f(x, y, -1); // Don't forget to normalize this direction!
+            dir = normalize(dir);
+            Ray ray(eye_pos,dir);
+            framebuffer[m++] = scene.castRay(ray, 0);
 
         }
-        UpdateProgress(j / (float)scene.height);
+        UpdateProgress(i / (float)scene.height);
     }
     UpdateProgress(1.f);
 

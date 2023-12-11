@@ -86,9 +86,11 @@ public:
         Vector3f min_vert = Vector3f{std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity()};
+
         Vector3f max_vert = Vector3f{-std::numeric_limits<float>::infinity(),
                                      -std::numeric_limits<float>::infinity(),
                                      -std::numeric_limits<float>::infinity()};
+
         for (int i = 0; i < mesh.Vertices.size(); i += 3) {
             std::array<Vector3f, 3> face_vertices;
             for (int j = 0; j < 3; j++) {
@@ -101,6 +103,7 @@ public:
                 min_vert = Vector3f(std::min(min_vert.x, vert.x),
                                     std::min(min_vert.y, vert.y),
                                     std::min(min_vert.z, vert.z));
+
                 max_vert = Vector3f(std::max(max_vert.x, vert.x),
                                     std::max(max_vert.y, vert.y),
                                     std::max(max_vert.z, vert.z));
@@ -113,8 +116,7 @@ public:
             new_mat->Ks = 0.0;
             new_mat->specularExponent = 0;
 
-            triangles.emplace_back(face_vertices[0], face_vertices[1],
-                                   face_vertices[2], new_mat);
+            triangles.emplace_back(face_vertices[0], face_vertices[1],face_vertices[2], new_mat);
         }
 
         bounding_box = Bounds3(min_vert, max_vert);

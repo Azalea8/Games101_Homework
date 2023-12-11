@@ -19,21 +19,25 @@ public:
     // setting up options
     int width = 1280;
     int height = 960;
+
     double fov = 90;
+
     Vector3f backgroundColor = Vector3f(0.235294, 0.67451, 0.843137);
+
     int maxDepth = 5;
 
-    Scene(int w, int h) : width(w), height(h)
-    {}
+    Scene(int w, int h) : width(w), height(h){}
 
     void Add(Object *object) { objects.push_back(object); }
     void Add(std::unique_ptr<Light> light) { lights.push_back(std::move(light)); }
 
-    const std::vector<Object*>& get_objects() const { return objects; }
-    const std::vector<std::unique_ptr<Light> >&  get_lights() const { return lights; }
-    Intersection intersect(const Ray& ray) const;
+    [[nodiscard]] const std::vector<Object*>& get_objects() const { return objects; }
+    [[nodiscard]] const std::vector<std::unique_ptr<Light> >&  get_lights() const { return lights; }
+    [[nodiscard]] Intersection intersect(const Ray& ray) const;
+
     BVHAccel *bvh;
     void buildBVH();
+
     Vector3f castRay(const Ray &ray, int depth) const;
     bool trace(const Ray &ray, const std::vector<Object*> &objects, float &tNear, uint32_t &index, Object **hitObject);
     std::tuple<Vector3f, Vector3f> HandleAreaLight(const AreaLight &light, const Vector3f &hitPoint, const Vector3f &N,

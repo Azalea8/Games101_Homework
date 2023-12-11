@@ -20,8 +20,10 @@ void Renderer::Render(const Scene& scene)
 
     float scale = tan(deg2rad(scene.fov * 0.5));
     float imageAspectRatio = scene.width / (float)scene.height;
+
     Vector3f eye_pos(-1, 5, 10);
     int m = 0;
+
     for (uint32_t i = 0; i < scene.height; ++i) {
         for (uint32_t j = 0; j < scene.width; ++j) {
             // 坐标系转换

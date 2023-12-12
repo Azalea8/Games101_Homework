@@ -10,7 +10,7 @@ struct Ray{
     Vector3f origin;
     Vector3f direction, direction_inv;
 
-    double t;//transportation time,
+    double t;   //transportation time,
     double t_min, t_max;
 
     Ray(const Vector3f& ori, const Vector3f& dir, const double _t = 0.0): origin(ori), direction(dir),t(_t) {

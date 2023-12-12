@@ -11,6 +11,7 @@
 // function().
 int main(int argc, char** argv)
 {
+    // 创建场景
     Scene scene(1280, 960);
 
     MeshTriangle bunny("../models/bunny/bunny.obj");

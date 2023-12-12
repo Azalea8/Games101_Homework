@@ -96,7 +96,10 @@ public:
         for (int i = 0; i < mesh.Vertices.size(); i += 3) {
             // 用来储存一个三角形
             std::array<Vector3f, 3> face_vertices;
+
             for (int j = 0; j < 3; j++) {
+                // 乘以 60.f的目的是对顶点进行缩放。通过将每个顶点的坐标乘以60.f，可以使模型在渲染时变大。
+                // 这种缩放可以用于调整模型的大小，以适应特定的渲染环境或视觉效果。
                 auto vert = Vector3f(mesh.Vertices[i + j].Position.X,
                                      mesh.Vertices[i + j].Position.Y,
                                      mesh.Vertices[i + j].Position.Z) *
@@ -126,14 +129,15 @@ public:
             triangles.emplace_back(face_vertices[0], face_vertices[1],face_vertices[2], new_mat);
         }
 
-        // 遍历完所有三角形，包围盒最小化
+        // 遍历完所有三角形，一堆三角形的包围盒最小化
+        // 后面 scene.buildBVH()需要用
         bounding_box = Bounds3(min_vert, max_vert);
 
         std::vector<Object*> ptrs;
         for (auto& tri : triangles)
             ptrs.push_back(&tri);
 
-        // 对所有三角形进行 BVH划分
+        // 对一堆三角形进行 BVH划分
         // 虽然 main.cpp后面又一次 scene.buildBVH() 但是它是把一堆三角形看作一个 Object，三角形内部还需继续细分
         bvh = new BVHAccel(ptrs);
     }

@@ -58,14 +58,13 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
 
     Intersection intersection = Scene::intersect(ray);
 
-    Material *m = intersection.m;
-    Object *hitObject = intersection.obj;
     Vector3f hitColor = this -> backgroundColor;
-    // Vector2f uv;
-    // uint32_t index = 0;
+
     if(intersection.happened) {
 
         Vector3f hitPoint = ray.origin + ray.direction * intersection.distance;
+        Material *m = intersection.m;
+        Object *hitObject = intersection.obj;
         Vector3f N = intersection.normal; // normal
         Vector2f st; // st coordinates
 
@@ -81,13 +80,17 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
                 Vector3f reflectionRayOrig = (dotProduct(reflectionDirection, N) < 0) ?
                                              hitPoint - N * EPSILON :
                                              hitPoint + N * EPSILON;
+
                 Vector3f refractionRayOrig = (dotProduct(refractionDirection, N) < 0) ?
                                              hitPoint - N * EPSILON :
                                              hitPoint + N * EPSILON;
+
                 Vector3f reflectionColor = castRay(Ray(reflectionRayOrig, reflectionDirection), depth + 1);
                 Vector3f refractionColor = castRay(Ray(refractionRayOrig, refractionDirection), depth + 1);
+
                 float kr;
                 fresnel(ray.direction, N, m->ior, kr);
+
                 hitColor = reflectionColor * kr + refractionColor * (1 - kr);
                 break;
             }
@@ -96,9 +99,11 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
                 float kr;
                 fresnel(ray.direction, N, m->ior, kr);
                 Vector3f reflectionDirection = reflect(ray.direction, N);
+
                 Vector3f reflectionRayOrig = (dotProduct(reflectionDirection, N) < 0) ?
                                              hitPoint + N * EPSILON :
                                              hitPoint - N * EPSILON;
+
                 hitColor = castRay(Ray(reflectionRayOrig, reflectionDirection),depth + 1) * kr;
                 break;
             }
@@ -109,6 +114,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
                 // is composed of a diffuse and a specular reflection component.
                 // [/comment]
                 Vector3f lightAmt = 0, specularColor = 0;
+
                 Vector3f shadowPointOrig = (dotProduct(ray.direction, N) < 0) ?
                                            hitPoint + N * EPSILON :
                                            hitPoint - N * EPSILON;
@@ -135,6 +141,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
                         // is the point in shadow, and is the nearest occluding object closer to the object than the light itself?
                         Intersection shadow_res = bvh->Intersect(Ray(shadowPointOrig, lightDir));
                         bool inShadow = shadow_res.happened && (shadow_res.distance * shadow_res.distance < lightDistance2);
+
                         lightAmt += (1 - int(inShadow)) * get_lights()[i]->intensity * LdotN;
                         Vector3f reflectionDirection = reflect(-lightDir, N);
                         specularColor += powf(std::max(0.f, -dotProduct(reflectionDirection, ray.direction)),

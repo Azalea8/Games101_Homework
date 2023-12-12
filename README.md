@@ -1,6 +1,6 @@
 # Games101_Homework
 
-### 该项目需要 OpenCV 和 Eigen3 的第三方库，以及 Cmake
+### 该项目的前3个作业需要 OpenCV 和 Eigen3 的第三方库
 
 ## OpenCV
 由于我采用的 **gcc** 作为编译器，需要 **Cmake** 编译 **OpenCV** 的源代码，由于种种原因，可能用 **Cmake** 编译会出现各种问题，万幸的是，有人已经上传了 **OpenCV-MinGW-Build** 各种版本

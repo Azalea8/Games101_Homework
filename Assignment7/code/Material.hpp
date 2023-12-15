@@ -73,15 +73,31 @@ private:
 
     Vector3f toWorld(const Vector3f &a, const Vector3f &N){
         Vector3f B, C;
+
+        /*
+         B, C其实只需要满足
+            B * C = 0
+            B * N = 0
+            C * N = 0
+        */
+
+        // 当 N的 x分量的绝对值大于 N的 y分量的绝对值时，意味着法线 N接近于垂直于 y轴的方向。
+        // N的 y分量可能非常小，可能会导致除以接近于 0的数，从而引发数值上的异常。
         if (std::fabs(N.x) > std::fabs(N.y)){
             float invLen = 1.0f / std::sqrt(N.x * N.x + N.z * N.z);
+            // 这里就用 0来把 N.y消去了
             C = Vector3f(N.z * invLen, 0.0f, -N.x *invLen);
         }
+        // 这里同理
         else {
             float invLen = 1.0f / std::sqrt(N.y * N.y + N.z * N.z);
             C = Vector3f(0.0f, N.z * invLen, -N.y *invLen);
         }
+        // 满足正交矩阵
         B = crossProduct(C, N);
+
+        // 线性代数里面的矩阵相乘
+        // 只是框架没有实现矩阵运算，将矩阵运算展开为 标量 乘以 基向量
         return a.x * B + a.y * C + a.z * N;
     }
 
@@ -135,9 +151,12 @@ Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
         {
             // uniform sample on the hemisphere
             float x_1 = get_random_float(), x_2 = get_random_float();
-            float z = std::fabs(1.0f - 2.0f * x_1);
+            float z = std::fabs(1.0f - 2.0f * x_1); // [0, 1]
             float r = std::sqrt(1.0f - z * z), phi = 2 * M_PI * x_2;
+            // 得到半径为 1一个球的上表面坐标
             Vector3f localRay(r*std::cos(phi), r*std::sin(phi), z);
+
+            // 转换到场景中的坐标系
             return toWorld(localRay, N);
             
             break;
@@ -149,7 +168,14 @@ float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
     switch(m_type){
         case DIFFUSE:
         {
-            // uniform sample probability 1 / (2 * PI)
+            // 真实的概率密度根本不是这样均匀
+
+            // 有没有发现，我们着色的时候之前要考虑漫反射，镜面反射，环境光
+            // 而这里直接让光线在半球面上一顿乱射，也就是我们之前考虑的光线是如何作用于着色点可以看作一个概率问题
+            // 镜面反射 (要求 wi wo 关于 N 对称)，这种情况的概率本身就非常低，我们之前还加了个非常大的指数来确保部分高光
+
+            // 也就是为了得到更加真实的渲染，概率密度本身就不该均匀
+            // 这个函数的参数附带了 wi，说明它一定是有相关作用的，只是这里没有用上
             if (dotProduct(wo, N) > 0.0f)
                 return 0.5f / M_PI;
             else

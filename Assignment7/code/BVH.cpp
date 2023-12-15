@@ -33,6 +33,7 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
     Bounds3 bounds;
     for (int i = 0; i < objects.size(); ++i)
         bounds = Union(bounds, objects[i]->getBounds());
+
     if (objects.size() == 1) {
         // Create leaf _BVHBuildNode_
         node->bounds = objects[0]->getBounds();
@@ -53,27 +54,28 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
     else {
         Bounds3 centroidBounds;
         for (int i = 0; i < objects.size(); ++i)
-            centroidBounds =
-                Union(centroidBounds, objects[i]->getBounds().Centroid());
+            centroidBounds = Union(centroidBounds, objects[i]->getBounds().Centroid());
+
         int dim = centroidBounds.maxExtent();
+
         switch (dim) {
-        case 0:
-            std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-                return f1->getBounds().Centroid().x <
-                       f2->getBounds().Centroid().x;
-            });
-            break;
-        case 1:
-            std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-                return f1->getBounds().Centroid().y <
-                       f2->getBounds().Centroid().y;
-            });
-            break;
-        case 2:
-            std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-                return f1->getBounds().Centroid().z <
-                       f2->getBounds().Centroid().z;
-            });
+            case 0:
+                std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
+                    return f1->getBounds().Centroid().x <
+                           f2->getBounds().Centroid().x;
+                });
+                break;
+            case 1:
+                std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
+                    return f1->getBounds().Centroid().y <
+                           f2->getBounds().Centroid().y;
+                });
+                break;
+            case 2:
+                std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
+                    return f1->getBounds().Centroid().z <
+                           f2->getBounds().Centroid().z;
+                });
             break;
         }
 
@@ -123,7 +125,7 @@ Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
     // 叶子节点
     if (node->left == nullptr && node->right == nullptr)
     {
-        isect = node->object->getIntersection(ray);
+        isect = node -> object -> getIntersection(ray);
         return isect;
     }
 
@@ -136,16 +138,19 @@ Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
 
 void BVHAccel::getSample(BVHBuildNode* node, float p, Intersection &pos, float &pdf){
     if(node->left == nullptr || node->right == nullptr){
-        node->object->Sample(pos, pdf);
+        node -> object -> Sample(pos, pdf);
+        // 不知道这里为什么又把 pdf变成 1
         pdf *= node->area;
         return;
     }
+    // 这里又是一堆三角形里面随机一个三角形
     if(p < node->left->area) getSample(node->left, p, pos, pdf);
     else getSample(node->right, p - node->left->area, pos, pdf);
 }
 
 void BVHAccel::Sample(Intersection &pos, float &pdf){
-    float p = std::sqrt(get_random_float()) * root->area;
+    float p = std::sqrt(get_random_float()) * root -> area;
     getSample(root, p, pos, pdf);
-    pdf /= root->area;
+    // 对整个发光体取概率密度
+    pdf /= root -> area;
 }

@@ -73,9 +73,10 @@ public:
     Vector3f evalDiffuseColor(const Vector2f&) const override;
     Bounds3 getBounds() override;
     void Sample(Intersection &pos, float &pdf){
-        float x = std::sqrt(get_random_float()), y = get_random_float();
+        float x = std::sqrt(get_random_float());
+        float y = get_random_float();
         pos.coords = v0 * (1.0f - x) + v1 * (x * (1.0f - y)) + v2 * (x * y);
-        pos.normal = this->normal;
+        pos.normal = this -> normal;
         pdf = 1.0f / area;
     }
     float getArea(){
@@ -101,9 +102,11 @@ public:
         Vector3f min_vert = Vector3f{std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity()};
+
         Vector3f max_vert = Vector3f{-std::numeric_limits<float>::infinity(),
                                      -std::numeric_limits<float>::infinity(),
                                      -std::numeric_limits<float>::infinity()};
+
         for (int i = 0; i < mesh.Vertices.size(); i += 3) {
             std::array<Vector3f, 3> face_vertices;
 
@@ -116,6 +119,7 @@ public:
                 min_vert = Vector3f(std::min(min_vert.x, vert.x),
                                     std::min(min_vert.y, vert.y),
                                     std::min(min_vert.z, vert.z));
+
                 max_vert = Vector3f(std::max(max_vert.x, vert.x),
                                     std::max(max_vert.y, vert.y),
                                     std::max(max_vert.z, vert.z));
@@ -196,8 +200,8 @@ public:
     }
     
     void Sample(Intersection &pos, float &pdf){
-        bvh->Sample(pos, pdf);
-        pos.emit = m->getEmission();
+        bvh -> Sample(pos, pdf);
+        pos.emit = m -> getEmission();
     }
     float getArea(){
         return area;

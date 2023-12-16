@@ -7,7 +7,7 @@
 
 #include "Vector.hpp"
 
-enum MaterialType { DIFFUSE};
+enum MaterialType { DIFFUSE, MIRROR };
 
 class Material{
 private:
@@ -161,6 +161,13 @@ Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
             
             break;
         }
+        case MIRROR:
+        {
+            // 时刻注意方向
+            Vector3f localRay = reflect(-wi, N);
+            return localRay;
+            break;
+        }
     }
 }
 
@@ -173,12 +180,18 @@ float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
     // 镜面反射 (要求 wi wo 关于 N 对称)，这种情况的概率本身就非常低，我们之前还加了个非常大的指数来确保部分高光
 
     switch(m_type){
-        case DIFFUSE:
-        {
+        case DIFFUSE: {
             // 也就是为了得到更加真实的渲染，概率密度本身就不该均匀
             // 这个函数的参数附带了 wi，说明它一定是有相关作用的，只是这里的漫反射没有用上
             if (dotProduct(wo, N) > 0.0f)
                 return 0.5f / M_PI;
+            else
+                return 0.0f;
+            break;
+        }
+        case MIRROR: {
+            if (dotProduct(wo, N) > 0.0f)
+                return 1.0f;
             else
                 return 0.0f;
             break;
@@ -195,6 +208,19 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
             if (cosalpha > 0.0f) {
                 Vector3f diffuse = Kd / M_PI;
                 return diffuse;
+            }
+            else
+                return Vector3f(0.0f);
+            break;
+        }
+        case MIRROR:
+        {
+            float cosalpha = dotProduct(N, wo);
+            float kr;
+            if (cosalpha > EPSILON) {
+                fresnel(wi, N, ior, kr);
+                Vector3f mirror = 1 / cosalpha;
+                return kr * mirror;
             }
             else
                 return Vector3f(0.0f);

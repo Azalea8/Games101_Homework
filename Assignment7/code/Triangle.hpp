@@ -235,13 +235,18 @@ inline Bounds3 Triangle::getBounds() { return Union(Bounds3(v0, v1), v2); }
 
 inline Intersection Triangle::getIntersection(Ray ray)
 {
+    // 代码和之前的三角形求交思路一致，这里是为了尽快返回
     Intersection inter;
 
+    // 很重要，这里是判断光线是不是从外部进来的，如果不是直接返回
     if (dotProduct(ray.direction, normal) > 0)
         return inter;
+
     double u, v, t_tmp = 0;
     Vector3f pvec = crossProduct(ray.direction, e2);
     double det = dotProduct(e1, pvec);
+
+    // 光线几乎是贴着三角形进来
     if (fabs(det) < EPSILON)
         return inter;
 

@@ -7,7 +7,7 @@
 
 #include "Vector.hpp"
 
-enum MaterialType { DIFFUSE, MIRROR };
+enum MaterialType { DIFFUSE, MIRROR, MICROFACET };
 
 class Material{
 private:
@@ -107,6 +107,10 @@ public:
     Vector3f m_emission;
     float ior;
     Vector3f Kd, Ks;
+
+    float roughness;
+    float metalness;
+
     float specularExponent;
     //Texture tex;
 
@@ -168,6 +172,30 @@ Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
             return localRay;
             break;
         }
+        case MICROFACET:
+        {
+        //    // 随机一个 ε 和 φ
+        //    float r0 = get_random_float();
+        //    float r1 = get_random_float();
+        //    float a2 = roughness * roughness;
+        //    float phi = 2 * M_PI * r1;
+        //    float theta = std::acos(sqrt((1 - r0) / (r0 * (a2 - 1) + 1)));
+        //    // 单位向量半径就直接 1 了，转换为直角坐标系只需要用到 r*sinθ，所以这里直接乘上去了
+        //    float r = std::sin(theta);
+        //    return reflect(-wi, toWorld(Vector3f(r * std::cos(phi), r * std::sin(phi), std::cos(theta)), N));
+
+            // uniform sample on the hemisphere
+            float x_1 = get_random_float(), x_2 = get_random_float();
+            float z = std::fabs(1.0f - 2.0f * x_1); // [0, 1]
+            float r = std::sqrt(1.0f - z * z), phi = 2 * M_PI * x_2;
+            // 得到半径为 1一个球的上表面坐标
+            Vector3f localRay(r*std::cos(phi), r*std::sin(phi), z);
+
+            // 转换到场景中的坐标系
+            return toWorld(localRay, N);
+
+            break;
+        }
     }
 }
 
@@ -196,7 +224,59 @@ float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
                 return 0.0f;
             break;
         }
+        case MICROFACET:
+        {
+        //    Vector3f h = (wo + wi).normalized();
+        //    float cosTheta = dotProduct(N, h);
+        //    float a2 = roughness * roughness;
+        //    // float a2 = a * a;
+        //    float exp = (a2 - 1) * cosTheta * cosTheta + 1;
+        //    float D = a2 / (M_PI * exp * exp);
+        //    return D * cosTheta / (4.f * dotProduct(wo, h));
+
+            // 也就是为了得到更加真实的渲染，概率密度本身就不该均匀
+            // 这个函数的参数附带了 wi，说明它一定是有相关作用的，只是这里的漫反射没有用上
+            if (dotProduct(wo, N) > 0.0f)
+                return 0.5f / M_PI;
+            else
+                return 0.0f;
+            break;
+        }
     }
+}
+
+inline Vector3f fresnelSchlick(float cosTheta, const Vector3f &F0)
+{
+    return F0 + (Vector3f(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+inline float GeometrySchlickGGX(float NdotV, float k)
+{
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+
+inline float GeometrySmith(float NdotV, float NdotL, float k)
+{
+    float ggx1 = GeometrySchlickGGX(NdotV, k);
+    float ggx2 = GeometrySchlickGGX(NdotL, k);
+
+    return ggx1 * ggx2;
+}
+
+inline float DistributionGGX(const Vector3f &N, const Vector3f &H, float a)
+{
+    float a2     = a*a;
+    float NdotH  = std::max(dotProduct(N, H), 0.f);
+    float NdotH2 = NdotH*NdotH;
+
+    float nom    = a2;
+    float denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom        = M_PI * denom * denom;
+
+    return nom / denom;
 }
 
 Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
@@ -226,6 +306,87 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
                 return Vector3f(0.0f);
             break;
         }
+        case MICROFACET:
+        {
+            // cosθ是入射光和法线的夹角，也就是光源方向和法线方向的夹角
+            float cosTheta = dotProduct(N, wo);
+            if(cosTheta > 0.f) {
+                // Vector3f F0(0.04f);
+                Vector3f V = wi;
+                Vector3f L = wo;
+                Vector3f H = (V + L).normalized();
+                float NdotV = std::max(dotProduct(N, V), 0.f);
+                float NdotL = cosTheta;
+                // 直接光照情况下的 k 公式
+                float k = (roughness + 1.f) * (roughness + 1.f) / 8.f;
+                float D = DistributionGGX(N, H, roughness);
+                float G = GeometrySmith(NdotV, NdotL, k);
+
+                // Vector3f F = fresnelSchlick(dotProduct(H, V), F0);
+                float F;
+                fresnel(V, N, ior, F);
+                Vector3f fs = D * G * F / (4.f * NdotV  * NdotL);
+
+                // 菲涅尔项就是 ks， kd = 1-ks;
+                Vector3f fr =  Kd / M_PI;
+
+                return (Vector3f(1.f) - F) * fr + F * fs;
+            }
+            return Vector3f(0.f);
+        }
+        // case MICROFACET:
+        // {
+        //     float cosalpha = dotProduct(N, wo);
+        //     if (cosalpha > 0.0f) 
+        //     {
+        //         // calculate the contribution of Microfacet model
+        //         float F, G, D;
+
+        //         fresnel(-wi, N, ior, F);
+
+        //         float Roughness = roughness;//超参数，控制粗糙度
+        //         auto G_function = [&](const float& Roughness, const Vector3f& wi, const Vector3f& wo, const Vector3f& N)
+        //         {
+        //             float A_wi, A_wo;
+        //             A_wi = (-1 + sqrt(1 + Roughness * Roughness * pow(tan(acos(dotProduct(wi, N))), 2))) / 2;
+        //             A_wo = (-1 + sqrt(1 + Roughness * Roughness * pow(tan(acos(dotProduct(wo, N))), 2))) / 2;
+        //             float divisor = (1 + A_wi + A_wo);
+        //             if (divisor < 0.001)
+        //                 return 1.f;
+        //             else
+        //                 return 1.0f / divisor;
+        //         };
+        //         G = G_function(Roughness, wi, wo, N);
+
+        //         auto D_function = [&](const float& Roughness, const Vector3f& h, const Vector3f& N)
+        //         {
+        //             float cos_sita = dotProduct(h, N);
+        //             float divisor = (M_PI * pow(1.0 + cos_sita * cos_sita * (Roughness * Roughness - 1), 2));
+        //             if (divisor < 0.001)
+        //                 return 1.f;
+        //             else 
+        //                 return (Roughness * Roughness) / divisor;
+        //         };
+        //         Vector3f h = normalize(wi + wo);
+        //         D = D_function(Roughness, h, N);
+
+        //         // energy balance
+        //         Vector3f diffuse = (Vector3f(1.0f) - F) * Kd / M_PI;
+        //         Vector3f specular;
+        //         float divisor= ((4 * (dotProduct(N, wi)) * (dotProduct(N, wo))));
+        //         if (divisor < 0.001)
+        //             specular= Vector3f(1);
+        //         else
+        //             specular = F *G * D / divisor;
+        //         //std::cout << "F:"<<F << "\n";
+        //         //std::cout << "diffuse:"<<diffuse<<"\n";
+        //         //std::cout << "specular:" << specular << "\n";
+        //         return diffuse+specular;
+        //     }
+        //     else
+        //         return Vector3f(0.0f);
+        //     break;
+        // }
     }
 }
 

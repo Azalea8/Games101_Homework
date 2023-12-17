@@ -77,8 +77,43 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
     // 由于计算机对于浮点数的相等判断过于困难，只能设定一个偏差值
     const float epsilon = 0.0005f;
 
+    Vector3f hitColor;
     switch (hit_obj.m -> getType()) {
-        case DIFFUSE:{
+        case MIRROR:{
+            Vector3f Lo_indir;
+            {
+                // 用随机数来确保递归停止，递归层数越深，越接近数学期望
+                if (get_random_float() < RussianRoulette)
+                {
+                    Vector3f dir2NextObj = hit_obj.m -> sample(wo, hit_obj.normal).normalized();
+
+                    float pdf = hit_obj.m -> pdf(wo, dir2NextObj, hit_obj.normal);
+                    if (pdf > epsilon)
+                    {
+                        Intersection nextObj = intersect(Ray(hit_obj.coords, dir2NextObj));
+                        // 保证碰撞发生
+                        if(nextObj.happened) {
+                            Vector3f f_r = hit_obj.m -> eval(dir2NextObj, wo, hit_obj.normal); //BRDF
+                            float cos = std::max(.0f, dotProduct(dir2NextObj, hit_obj.normal));
+
+                            // 如果不是发光体
+                            if(!nextObj.m->hasEmission()) {
+                                // 这里要记得除以 RussianRoulette，保证数学期望正确
+                                Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
+                            }else {
+                                // TODO: 镜面反射后进入光源，按理说会是高光，不知道怎么做高光
+                                // 如果不分支的话 Lo_indir = nextObj.m->getEmission() * f_r * cos / pdf / RussianRoulette;
+                                // 但这里我想的是属于直接光照，没必要去赌了
+                                Lo_indir = nextObj.m -> getEmission() * f_r * cos;
+                            }
+                        }
+                    }
+                }
+            }
+
+            hitColor = Lo_indir;
+        }
+        default:{
             // 直接光照贡献
             // 直接光照只能来自场景中的光源，物体是一定能跟光源连上线的，但是其中可能有遮挡。
             // 全球面去赌的话，开销太大了
@@ -132,43 +167,13 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
                 }
             }
 
-            return Lo_dir + Lo_indir;
-        }
-        case MIRROR:{
-            Vector3f Lo_indir;
-            {
-                // 用随机数来确保递归停止，递归层数越深，越接近数学期望
-                if (get_random_float() < RussianRoulette)
-                {
-                    Vector3f dir2NextObj = hit_obj.m -> sample(wo, hit_obj.normal).normalized();
-
-                    float pdf = hit_obj.m -> pdf(wo, dir2NextObj, hit_obj.normal);
-                    if (pdf > epsilon)
-                    {
-                        Intersection nextObj = intersect(Ray(hit_obj.coords, dir2NextObj));
-                        // 保证碰撞发生
-                        if(nextObj.happened) {
-                            Vector3f f_r = hit_obj.m -> eval(dir2NextObj, wo, hit_obj.normal); //BRDF
-                            float cos = std::max(.0f, dotProduct(dir2NextObj, hit_obj.normal));
-
-                            // 如果不是发光体
-                            if(!nextObj.m->hasEmission()) {
-                                // 这里要记得除以 RussianRoulette，保证数学期望正确
-                                Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
-                            }else {
-                                // TODO: 镜面反射后进入光源，按理说会是高光，不知道怎么做高光
-                                // 如果不分支的话 Lo_indir = nextObj.m->getEmission() * f_r * cos / pdf / RussianRoulette;
-                                // 但这里我想的是属于直接光照，没必要去赌了
-                                Lo_indir = nextObj.m -> getEmission() * f_r * cos;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return  Lo_indir;
+            hitColor = Lo_dir + Lo_indir;
         }
     }
+    // hitColor.x = (clamp(0, 1, hitColor.x));
+    // hitColor.y = (clamp(0, 1, hitColor.y));
+    // hitColor.z = (clamp(0, 1, hitColor.z));
+    return hitColor;
 }
 
 // Implementation of Path Tracing

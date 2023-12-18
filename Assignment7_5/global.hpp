@@ -15,8 +15,7 @@ inline float clamp(const float &lo, const float &hi, const float &v)
 inline  bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1)
 {
     float discr = b * b - 4 * a * c;
-    if (discr < 0) return false;
-    else if (discr == 0) x0 = x1 = - 0.5 * b / a;
+    if (discr < EPSILON) return false;
     else {
         float q = (b > 0) ?
                   -0.5 * (b + sqrt(discr)) :

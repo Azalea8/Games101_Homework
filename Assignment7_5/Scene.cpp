@@ -95,23 +95,14 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
                         if(nextObj.happened) {
                             Vector3f f_r = hit_obj.m -> eval(dir2NextObj, wo, hit_obj.normal); //BRDF
                             float cos = std::max(.0f, dotProduct(dir2NextObj, hit_obj.normal));
-
-                            // 如果不是发光体
-                            if(!nextObj.m->hasEmission()) {
-                                // 这里要记得除以 RussianRoulette，保证数学期望正确
-                                Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
-                            }else {
-                                // TODO: 镜面反射后进入光源，按理说会是高光，不知道怎么做高光
-                                // 如果不分支的话 Lo_indir = nextObj.m->getEmission() * f_r * cos / pdf / RussianRoulette;
-                                // 但这里我想的是属于直接光照，没必要去赌了
-                                Lo_indir = nextObj.m -> getEmission() * f_r * cos;
-                            }
+                            Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
                         }
                     }
                 }
             }
 
             hitColor = Lo_indir;
+            break;
         }
         default:{
             // 直接光照贡献
@@ -168,6 +159,7 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
             }
 
             hitColor = Lo_dir + Lo_indir;
+            break;
         }
     }
     // hitColor.x = (clamp(0, 1, hitColor.x));
@@ -181,6 +173,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
 {
     // TO DO Implement Path Tracing Algorithm here
     auto hitObj = intersect(ray);
+    // 没有撞到物体，返回黑色
     if (!hitObj.happened) return {};
     return shade(hitObj,-ray.direction);
 }

@@ -149,7 +149,7 @@ void BVHAccel::getSample(BVHBuildNode* node, float p, Intersection &pos, float &
 }
 
 void BVHAccel::Sample(Intersection &pos, float &pdf){
-    float p = std::sqrt(get_random_float()) * root -> area;
+    float p = std::sqrt(get_random_float()) * (root -> area);
     getSample(root, p, pos, pdf);
     // 对整个发光体取概率密度
     pdf /= root -> area;

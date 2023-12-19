@@ -7,7 +7,7 @@
 
 #include "Vector.hpp"
 
-enum MaterialType { DIFFUSE, MIRROR, MICROFACET };
+enum MaterialType { DIFFUSE, MIRROR, MICROFACET,  Refract };
 
 class Material{
 private:
@@ -34,7 +34,7 @@ private:
         float cosi = clamp(-1, 1, dotProduct(I, N));
         float etai = 1, etat = ior;
         Vector3f n = N;
-        if (cosi < 0) { cosi = -cosi; } else { std::swap(etai, etat); n= -N; }
+        if (cosi < 0) { cosi = -cosi;} else { std::swap(etai, etat); n= -N; }
         float eta = etai / etat;
         float k = 1 - eta * eta * (1 - cosi * cosi);
         return k < 0 ? 0 : eta * I + (eta * cosi - sqrtf(k)) * n;
@@ -51,6 +51,7 @@ private:
     // \param[out] kr is the amount of light reflected
     void fresnel(const Vector3f &I, const Vector3f &N, const float &ior, float &kr) const
     {
+        // std::cout << dotProduct(I, N) <<std::endl;
         float cosi = clamp(-1, 1, dotProduct(I, N));
         float etai = 1, etat = ior;
         if (cosi > 0) {  std::swap(etai, etat); }
@@ -175,6 +176,14 @@ Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
             return localRay;
             break;
         }
+        case Refract:
+        {
+            // 时刻注意方向
+            Vector3f localRay = refract(-wi, N, ior);
+            // std::cout << dotProduct(localRay, N) << std::endl;
+            return localRay;
+            break;
+        }
         case MICROFACET:
         {
             // 随机一个 ε 和 φ
@@ -227,6 +236,11 @@ float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
                 return 1.0f;
             else
                 return 0.0f;
+            break;
+        }
+        case Refract: {
+            return 1.0f;
+                
             break;
         }
         case MICROFACET:
@@ -301,6 +315,17 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
             }
             else
                 return Vector3f(0.0f);
+            break;
+        }
+        case Refract:
+        {
+            float cosalpha = dotProduct(N, wo);
+            float kr;
+
+            fresnel(-wi, N, ior, kr);
+            // Vector3f mirror = 1 / std::fabs(cosalpha);
+            // std::cout <<  kr * mirror<<std::endl;
+            return (1 -kr);
             break;
         }
         case MICROFACET:

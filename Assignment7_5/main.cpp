@@ -29,6 +29,10 @@ int main(int argc, char** argv)
     white_mirror->Kd = Vector3f(0.0f, 0.0f, 0.0f);
     white_mirror->ior = 40.0f;
 
+    Material* white_refract = new Material(Refract, Vector3f(0.0f));
+    white_refract->Kd = Vector3f(0.0f, 0.0f, 0.0f);
+    white_refract->ior = 1.5f;
+
     Material* microfacet = new Material(MICROFACET, Vector3f(0.0f));
     microfacet->Kd = Vector3f(0.3, 0.3, 0.25);
     microfacet->roughness = 0.5f;
@@ -51,22 +55,22 @@ int main(int argc, char** argv)
     light->Kd = Vector3f(0.65f);
 
     MeshTriangle floor("../models/cornellbox/floor.obj", white);
-    MeshTriangle shortbox("../models/cornellbox/shortbox.obj", micro_Au);
-    MeshTriangle tallbox("../models/cornellbox/tallbox.obj", micro_Al);
+    // MeshTriangle shortbox("../models/cornellbox/shortbox.obj", white_mirror);
+    // MeshTriangle tallbox("../models/cornellbox/tallbox.obj", white_mirror);
     MeshTriangle left("../models/cornellbox/left.obj", red);
     MeshTriangle right("../models/cornellbox/right.obj", green);
     MeshTriangle light_("../models/cornellbox/light.obj", light);
     // MeshTriangle bunny("../models/bunny/bunny.obj", white_mirror, Vector3f(200,-60,150), Vector3f(1500,1500,1500), Vector3f(-1,0,0), Vector3f(0,1,0), Vector3f(0,0,-1));
-    // Sphere sphere(Vector3f(150, 100, 200), 100, micro_Au);
+    Sphere sphere(Vector3f(150, 100, 200), 100, white_refract);
 
     scene.Add(&floor);
-    scene.Add(&shortbox);
-    scene.Add(&tallbox);
+    // scene.Add(&shortbox);
+    // scene.Add(&tallbox);
     scene.Add(&left);
     scene.Add(&right);
     scene.Add(&light_);
     // scene.Add(&bunny);
-    // scene.Add(&sphere);
+    scene.Add(&sphere);
     
     scene.buildBVH();
 

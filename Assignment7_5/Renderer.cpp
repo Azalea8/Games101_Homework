@@ -52,8 +52,8 @@ void Renderer::Render(const Scene& scene)
     UpdateProgress(1.f);*/
 
     // change the spp value to change sample ammount
-    int spp = 400;
-    int l = 21;
+    int spp = 81;
+    int l = 10;
 
     int thread_num = 16; //我的电脑有 16个逻辑处理器，所以开 16个线程。注：屏幕的高度一定要是线程数的倍数
 
@@ -86,12 +86,12 @@ void Renderer::Render(const Scene& scene)
 
                         Vector3f dir = normalize(Vector3f(-x, y, 1));
 
-                        // framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0) / (float)spp;
+                        framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0) / (float)spp;
 
-                        for (int k = 0; k < 16;k++) {
-                            // 同一个像素超采样可以不采用算数平均，像素中心的贡献值应该比靠近边缘的大，可以采用离散的正态分布作为权重
-                            framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0) / (float)spp / 16.f;
-                        }
+                        // for (int k = 0; k < 16;k++) {
+                        //     // 同一个像素超采样可以不采用算数平均，像素中心的贡献值应该比靠近边缘的大，可以采用离散的正态分布作为权重
+                        //     framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0) / (float)spp / 16.f;
+                        // }
                     }
                 }
             }

@@ -40,11 +40,14 @@ int main(int argc, char** argv)
 
     Material* micro_Al = new Material(MICROFACET, Vector3f(0.0f));
     micro_Al->Kd = Vector3f(0.913f, 0.921f, 0.925f);
-    micro_Al->roughness = 0.001f;
+    micro_Al->roughness = 0.01f;
     micro_Al->metalness = 1.0f;
 
-    Material* Au = new Material(DIFFUSE, Vector3f(0.0f));
+    Material* Au = new Material(TEST, Vector3f(0.0f));
     Au->Kd = Vector3f(1.000f, 0.766f, 0.336f);
+    Au->roughness = 0.0001f;
+    Au->metalness = 0.0f;
+    Au->ior = 2.0f;
 
     Material* micro_Au = new Material(MICROFACET, Vector3f(0.0f));
     micro_Au->Kd = Vector3f(1.000f, 0.766f, 0.336f);
@@ -60,8 +63,8 @@ int main(int argc, char** argv)
     MeshTriangle left("../models/cornellbox/left.obj", red);
     MeshTriangle right("../models/cornellbox/right.obj", green);
     MeshTriangle light_("../models/cornellbox/light.obj", light);
-    // MeshTriangle bunny("../models/bunny/bunny.obj", white_mirror, Vector3f(200,-60,150), Vector3f(1500,1500,1500), Vector3f(-1,0,0), Vector3f(0,1,0), Vector3f(0,0,-1));
-    Sphere sphere(Vector3f(150, 100, 200), 100, white_refract);
+    // MeshTriangle bunny("../models/bunny/bunny.obj", micro_Au, Vector3f(200,-60,150), Vector3f(1500,1500,1500), Vector3f(-1,0,0), Vector3f(0,1,0), Vector3f(0,0,-1));
+    Sphere sphere(Vector3f(150, 100, 200), 100, Au);
 
     scene.Add(&floor);
     // scene.Add(&shortbox);

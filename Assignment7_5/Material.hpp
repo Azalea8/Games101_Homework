@@ -7,7 +7,7 @@
 
 #include "Vector.hpp"
 
-enum MaterialType { DIFFUSE, MIRROR, MICROFACET,  Refract };
+enum MaterialType { DIFFUSE, MIRROR, MICROFACET,  Refract, TEST };
 
 class Material{
 private:
@@ -153,7 +153,7 @@ Vector3f Material::getColorAt(double u, double v) {
 }
 
 
-Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
+Vector3f Material::sample(const Vector3f &wo, const Vector3f &N){
     switch(m_type){
         case DIFFUSE:
         {
@@ -172,20 +172,33 @@ Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
         case MIRROR:
         {
             // 时刻注意方向
-            Vector3f localRay = reflect(-wi, N);
+            Vector3f localRay = reflect(-wo, N);
             return localRay;
             break;
         }
         case Refract:
         {
             // 时刻注意方向
-            Vector3f localRay = refract(-wi, N, ior);
+            Vector3f localRay = refract(-wo, N, ior);
             // std::cout << dotProduct(localRay, N) << std::endl;
             return localRay;
             break;
         }
+        case TEST: 
+        {
+            float r0 = get_random_float();
+            float r1 = get_random_float();
+            float a2 = roughness * roughness;
+            float phi = 2 * M_PI * r1;
+            float theta = std::acos(sqrt((1 - r0) / (r0 * (a2 - 1) + 1)));
+            // 单位向量半径就直接 1 了，转换为直角坐标系只需要用到 r*sinθ，所以这里直接乘上去了
+            float r = std::sin(theta);
+
+            return refract(-wo, toWorld(Vector3f(r * std::cos(phi), r * std::sin(phi), std::cos(theta)), N), ior);
+        }
         case MICROFACET:
         {
+            
             // 随机一个 ε 和 φ
             float r0 = get_random_float();
             float r1 = get_random_float();
@@ -194,45 +207,33 @@ Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
             float theta = std::acos(sqrt((1 - r0) / (r0 * (a2 - 1) + 1)));
             // 单位向量半径就直接 1 了，转换为直角坐标系只需要用到 r*sinθ，所以这里直接乘上去了
             float r = std::sin(theta);
-            return reflect(-wi, toWorld(Vector3f(r * std::cos(phi), r * std::sin(phi), std::cos(theta)), N));
-
-//            // uniform sample on the hemisphere
-//            float x_1 = get_random_float(), x_2 = get_random_float();
-//            float z = std::fabs(1.0f - 2.0f * x_1); // [0, 1]
-//            float r = std::sqrt(1.0f - z * z), phi = 2 * M_PI * x_2;
-//            // 得到半径为 1一个球的上表面坐标
-//            Vector3f localRay(r*std::cos(phi), r*std::sin(phi), z);
-//
-//            // 转换到场景中的坐标系
-//            return toWorld(localRay, N);
-//
-//            break;
+            return reflect(-wo, toWorld(Vector3f(r * std::cos(phi), r * std::sin(phi), std::cos(theta)), N));
         }
     }
 }
 
-float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
+float Material::pdf(const Vector3f &wo, const Vector3f &wi, const Vector3f &N){
 
     // 真实的概率密度根本不是这样均匀
 
     // 有没有发现，我们着色的时候之前要考虑漫反射，镜面反射，环境光
     // 而这里直接让光线在半球面上一顿乱射，也就是我们之前考虑的光线是如何作用于着色点可以看作一个概率问题
     // 镜面反射 (要求 wi wo 关于 N 对称)，这种情况的概率本身就非常低，我们之前还加了个非常大的指数来确保部分高光
-    float cosalpha = dotProduct(wo, N);
+    float cosalpha_i_N = dotProduct(wi, N);
 
     switch(m_type){
         case DIFFUSE: {
             // 也就是为了得到更加真实的渲染，概率密度本身就不该均匀
             // 这个函数的参数附带了 wi，说明它一定是有相关作用的，只是这里的漫反射没有用上
 
-            if (cosalpha > EPSILON)
-                return cosalpha / M_PI;
+            if (cosalpha_i_N > EPSILON)
+                return 0.5 / M_PI;
             else
                 return 0.0f;
             break;
         }
         case MIRROR: {
-            if (cosalpha > EPSILON)
+            if (cosalpha_i_N > EPSILON)
                 return 1.0f;
             else
                 return 0.0f;
@@ -243,9 +244,25 @@ float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
                 
             break;
         }
+        case TEST: 
+        {
+            if(cosalpha_i_N > EPSILON) {
+                // 光线是从物体内部射进空气
+                Vector3f h = (ior * wo + wi).normalized(); // h 与 N方向相反
+                // std:: cout << dotProduct(h, N) <<std::endl;
+                return DistributionGGX(N, -h, roughness) * dotProduct(N, -h) / (4.f * dotProduct(wo, h));
+            }
+            else if(cosalpha_i_N < -EPSILON) {
+                Vector3f h = (ior * wi + wo).normalized();
+                return DistributionGGX(N, -h, roughness) * dotProduct(N, -h) / (4.f * dotProduct(wo, -h));
+            }
+            else {
+                return 0.0f;
+            }
+        }
         case MICROFACET:
         {
-            if (cosalpha > EPSILON) {
+            if (cosalpha_i_N > EPSILON) {
                 Vector3f h = (wo + wi).normalized();
                 return DistributionGGX(N, h, roughness) * dotProduct(N, h) / (4.f * dotProduct(wo, h));
             }else{
@@ -282,10 +299,12 @@ float Material::DistributionGGX(const Vector3f &N, const Vector3f &H, float a)
     float a2     = a*a;
     float NdotH  = std::max(dotProduct(N, H), 0.f);
     float NdotH2 = NdotH*NdotH;
-
+    // std::cout << NdotH2 << std::endl;
     float nom    = a2;
     float denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+    // std::cout << denom << std::endl;
     denom        = M_PI * denom * denom;
+    // denom = std::max(denom, EPSILON);
 
     return nom / denom;
 }
@@ -328,16 +347,18 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
             return (1 -kr);
             break;
         }
-        case MICROFACET:
+        case TEST:
         {
-            // cosθ是入射光和法线的夹角，也就是光源方向和法线方向的夹角
-            float cosTheta = dotProduct(N, wo);
-            if(cosTheta > EPSILON) {
+            float cosTheta_o_N = dotProduct(N, wo);
+            float cosTheta_i_N = dotProduct(N, wi);
+            if (cosTheta_i_N * cosTheta_o_N > 0.0f) {
+                // std::cout << "}}"<<std::endl;
+                // 发生反射
                 Vector3f V = wi;
                 Vector3f L = wo;
                 Vector3f H = (V + L).normalized();
                 float NdotV = std::max(dotProduct(N, V), EPSILON);
-                float NdotL = cosTheta;
+                float NdotL = std::max(dotProduct(N, L), EPSILON);
                 // 直接光照情况下的 k 公式
                 float k = (roughness + 1.f) * (roughness + 1.f) / 8.f;
                 float D = DistributionGGX(N, H, roughness);
@@ -354,7 +375,87 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
                 Vector3f fr =  Kd / M_PI;
 
                 // return (Vector3f(1.0f) - F0) * fr + F0 * fs;
-                return (Vector3f(1.0f) - F) * (1 - metalness) * fr + F * fs;
+                return (Vector3f(1.0f) - F) * (1 - metalness) * fr + fs;
+            }
+            else if(cosTheta_i_N * cosTheta_o_N < -EPSILON) {
+                // std::cout << "}}"<<std::endl;
+                // 发生折射
+                Vector3f H;
+                float ior_now, ior_i, ior_o;
+                if(cosTheta_i_N > 0.0f) {
+                    // 光线是从物体内部射进空气
+                    H = (ior * wo + wi).normalized(); // h 与 N方向相反
+                    ior_now = 1.f / ior;
+                    ior_i = 1.f / ior;
+                    ior_o = 1;
+                }else {
+                    H = (ior * wi + wo).normalized(); // h 与 N方向相反
+                    ior_now = 1.f / ior;
+                    ior_i = 1.f / ior;
+                    ior_o = 1;
+                }
+                
+                float NdotWo = std::fabs(dotProduct(N, wo));
+                float NdotWi = std::fabs(dotProduct(N, wi));
+                float HdotWo = std::fabs(dotProduct(H, wo));
+                float HdotWi = std::fabs(dotProduct(H, wi));
+
+                float k = (roughness + 1.f) * (roughness + 1.f) / 8.f;
+                float D = DistributionGGX(N, -H, roughness);
+                float G = GeometrySmith(NdotWi, NdotWo, k);
+
+                Vector3f F0(0.04f);
+                F0 = lerp(F0, Kd, metalness);
+                Vector3f F = fresnelSchlick(HdotWi, F0);
+
+                // std::cout << F <<std::endl;
+                // float F_;
+                // fresnel(-wi, -H, ior, F_);
+
+                // Vector3f F(F_);
+                // std::cout << F << std::endl;
+                float temp = powf(ior_i * HdotWi + ior_o * HdotWo, 2);
+
+                Vector3f fr = (HdotWo * HdotWi * D * G * (Vector3f(1.0f) - F) * ior_now * ior_now) /  NdotWi * NdotWo;
+                // std::cout << D <<std::endl;
+                
+                Vector3f fs =  Kd / M_PI;;
+                return (1- metalness) * fr + F * fs;
+                // return (Vector3f(1.0f) - F);
+            }
+            
+            return Vector3f(0.f);
+            break;
+        }
+        case MICROFACET:
+        {
+            // cosθ是入射光和法线的夹角，也就是光源方向和法线方向的夹角
+            float cosTheta = dotProduct(N, wo);
+            if(cosTheta > EPSILON) {
+                Vector3f V = wi;
+                Vector3f L = wo;
+                Vector3f H = (V + L).normalized();
+                float NdotV = std::max(dotProduct(N, V), EPSILON);
+                float NdotL = cosTheta;
+                // 直接光照情况下的 k 公式
+                float k = (roughness + 1.f) * (roughness + 1.f) / 8.f;
+                float D = DistributionGGX(N, H, roughness);
+                // std::cout << D <<std::endl;
+                float G = GeometrySmith(NdotV, NdotL, k);
+
+                Vector3f F0(0.04f);
+                F0 = lerp(F0, Kd, metalness);
+                Vector3f F = fresnelSchlick(dotProduct(H, V), F0);
+                // float F;
+                // fresnel(-V, N, ior, F);
+                Vector3f fs = D * G * F / (4.f * NdotV  * NdotL);
+
+                // std::cout << fs <<std::endl;
+                // 菲涅尔项就是 ks， kd = 1-ks;
+                Vector3f fr =  Kd / M_PI;
+
+                // return (Vector3f(1.0f) - F0) * fr + F0 * fs;
+                return (Vector3f(1.0f) - F) * (1 - metalness) * fr + fs;
             }
             return Vector3f(0.f);
             break;

@@ -126,6 +126,7 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
                         // 保证碰撞发生
                         if(nextObj.happened) {                            
                             Vector3f f_r = hit_obj.m -> eval(dir2NextObj, wo, hit_obj.normal); //BRDF
+                            // std::cout << f_r << std::endl;
                             float cos = std::max(.0f, std::fabs(dotProduct(dir2NextObj, hit_obj.normal)));
                             Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
                         }
@@ -134,6 +135,128 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
             }
 
             hitColor = Lo_indir;
+            break;
+        }
+        case TEST:{
+            // 直接光照贡献
+            // 直接光照只能来自场景中的光源，物体是一定能跟光源连上线的，但是其中可能有遮挡。
+            // 全球面去赌的话，开销太大了
+            // 所以才让直接直接光照的光路从光源的投影那块面积出发，是否遮挡后续再处理
+            Vector3f Lo_dir;
+            {
+                // 这里是对光源采样
+                float light_pdf;
+                Intersection hit_light;
+                sampleLight(hit_light, light_pdf);
+
+                Vector3f obj2Light = hit_light.coords - hit_obj.coords;     // 着色点到随机点光源的向量
+                Vector3f obj2LightDir = obj2Light.normalized();     // 从着色点指向点光源
+
+                // 检查光线是否被遮挡
+                auto t = intersect(Ray(hit_obj.coords, obj2LightDir));
+                if (t.distance - obj2Light.norm() > -epsilon)
+                {
+                    Vector3f f_r = hit_obj.m -> eval(obj2LightDir, wo, hit_obj.normal);
+                    float r2 = dotProduct(obj2Light, obj2Light);
+                    float cosA = std::max(.0f, dotProduct(hit_obj.normal,obj2LightDir));
+                    float cosB = std::max(.0f, dotProduct(hit_light.normal,-obj2LightDir));
+                    Lo_dir = hit_light.emit * f_r * cosA * cosB / r2 / light_pdf;
+                }
+            }
+
+            // 间接光照贡献
+            // 关于为何不可以把其他物体也当做光源处理，主要原因是这样做会使问题变得更加复杂。(把所有物体投影到着色点那个球面上，间接光照也来自于这些区域)
+            // 当我们考虑其他物体作为光源时，我们需要计算这些物体对整个场景的贡献，这通常涉及到更复杂的数学计算和采样方法。
+            // 而单独对光源进行面积积分可以使问题得到简化，因为我们可以更容易地控制和优化采样过程。
+            Vector3f Lo_indir;
+            {
+                // 用随机数来确保递归停止，递归层数越深，越接近数学期望
+                if (get_random_float() < RussianRoulette)
+                {
+                    Vector3f dir2NextObj = hit_obj.m -> sample(wo, hit_obj.normal).normalized();
+
+                    float pdf = hit_obj.m -> pdf(wo, dir2NextObj, hit_obj.normal);
+                    // std::cout << pdf << std::endl;
+                    if (pdf > epsilon)
+                    {
+                        Vector3f refractionRay_Orig = (dotProduct(dir2NextObj, hit_obj.normal) < 0) ?
+                                             hit_obj.coords - hit_obj.normal * epsilon:
+                                              hit_obj.coords + hit_obj.normal * epsilon;
+
+                        Intersection nextObj = intersect(Ray(refractionRay_Orig, dir2NextObj));
+                        // 保证碰撞发生，并且物体不是发光体，间接光照递归
+                        if (nextObj.happened && !nextObj.m->hasEmission())
+                        {
+                            Vector3f f_r = hit_obj.m -> eval(dir2NextObj, wo, hit_obj.normal); //BRDF
+                            // std::cout << f_r <<std::endl;
+                            float cos = std::max(.0f, std::fabs(dotProduct(dir2NextObj, hit_obj.normal)));
+                            // 这里要记得除以 RussianRoulette，保证数学期望正确
+                            Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
+                            // std::cout << Lo_indir << std::endl;
+                        }
+                    }
+                }
+            }
+
+            hitColor = Lo_indir;
+            break;
+        }
+        case DIFFUSE:{
+            // 直接光照贡献
+            // 直接光照只能来自场景中的光源，物体是一定能跟光源连上线的，但是其中可能有遮挡。
+            // 全球面去赌的话，开销太大了
+            // 所以才让直接直接光照的光路从光源的投影那块面积出发，是否遮挡后续再处理
+            Vector3f Lo_dir;
+            {
+                // 这里是对光源采样
+                float light_pdf;
+                Intersection hit_light;
+                sampleLight(hit_light, light_pdf);
+
+                Vector3f obj2Light = hit_light.coords - hit_obj.coords;     // 着色点到随机点光源的向量
+                Vector3f obj2LightDir = obj2Light.normalized();     // 从着色点指向点光源
+
+                // 检查光线是否被遮挡
+                auto t = intersect(Ray(hit_obj.coords, obj2LightDir));
+                if (t.distance - obj2Light.norm() > -epsilon)
+                {
+                    Vector3f f_r = hit_obj.m -> eval(obj2LightDir, wo, hit_obj.normal);
+                    float r2 = dotProduct(obj2Light, obj2Light);
+                    float cosA = std::max(.0f, dotProduct(hit_obj.normal,obj2LightDir));
+                    float cosB = std::max(.0f, dotProduct(hit_light.normal,-obj2LightDir));
+                    Lo_dir = hit_light.emit * f_r * cosA * cosB / r2 / light_pdf;
+                }
+            }
+
+            // 间接光照贡献
+            // 关于为何不可以把其他物体也当做光源处理，主要原因是这样做会使问题变得更加复杂。(把所有物体投影到着色点那个球面上，间接光照也来自于这些区域)
+            // 当我们考虑其他物体作为光源时，我们需要计算这些物体对整个场景的贡献，这通常涉及到更复杂的数学计算和采样方法。
+            // 而单独对光源进行面积积分可以使问题得到简化，因为我们可以更容易地控制和优化采样过程。
+            Vector3f Lo_indir;
+            {
+                // 用随机数来确保递归停止，递归层数越深，越接近数学期望
+                if (get_random_float() < RussianRoulette)
+                {
+                    Vector3f dir2NextObj = hit_obj.m -> sample(wo, hit_obj.normal).normalized();
+
+                    float pdf = hit_obj.m -> pdf(wo, dir2NextObj, hit_obj.normal);
+                    
+                    if (pdf > epsilon)
+                    {
+                        Intersection nextObj = intersect(Ray(hit_obj.coords, dir2NextObj));
+                        // 保证碰撞发生，并且物体不是发光体，间接光照递归
+                        if (nextObj.happened && !nextObj.m->hasEmission())
+                        {
+                            Vector3f f_r = hit_obj.m -> eval(dir2NextObj, wo, hit_obj.normal); //BRDF
+                            float cos = std::max(.0f, dotProduct(dir2NextObj, hit_obj.normal));
+                            // 这里要记得除以 RussianRoulette，保证数学期望正确
+                            Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
+                        }
+                    }
+                }
+            }
+
+            hitColor = Lo_dir + Lo_indir;
             break;
         }
         default:{
@@ -175,6 +298,7 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
                     Vector3f dir2NextObj = hit_obj.m -> sample(wo, hit_obj.normal).normalized();
 
                     float pdf = hit_obj.m -> pdf(wo, dir2NextObj, hit_obj.normal);
+                    // std::cout << pdf << std::endl;
                     if (pdf > epsilon)
                     {
                         Intersection nextObj = intersect(Ray(hit_obj.coords, dir2NextObj));

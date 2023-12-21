@@ -5,8 +5,8 @@
 #include <fstream>
 #include "Scene.hpp"
 #include "Renderer.hpp"
-#include<mingw.thread.h>
-#include<mingw.mutex.h>
+#include<thread>
+#include<mutex>
 
 inline float deg2rad(const float& deg) { return deg * M_PI / 180.0; }
 

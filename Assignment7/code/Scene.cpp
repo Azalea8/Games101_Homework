@@ -79,31 +79,6 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
 
     Vector3f hitColor;
     switch (hit_obj.m -> getType()) {
-        case MIRROR:{
-            Vector3f Lo_indir;
-            {
-                // 用随机数来确保递归停止，递归层数越深，越接近数学期望
-                if (get_random_float() < RussianRoulette)
-                {
-                    Vector3f dir2NextObj = hit_obj.m -> sample(wo, hit_obj.normal).normalized();
-
-                    float pdf = hit_obj.m -> pdf(wo, dir2NextObj, hit_obj.normal);
-                    if (pdf > epsilon)
-                    {
-                        Intersection nextObj = intersect(Ray(hit_obj.coords, dir2NextObj));
-                        // 保证碰撞发生
-                        if(nextObj.happened) {
-                            Vector3f f_r = hit_obj.m -> eval(dir2NextObj, wo, hit_obj.normal); //BRDF
-                            float cos = std::max(.0f, dotProduct(dir2NextObj, hit_obj.normal));
-                            Lo_indir = shade(nextObj, -dir2NextObj) * f_r * cos / pdf / RussianRoulette;
-                        }
-                    }
-                }
-            }
-
-            hitColor = Lo_indir;
-            break;
-        }
         default:{
             // 直接光照贡献
             // 直接光照只能来自场景中的光源，物体是一定能跟光源连上线的，但是其中可能有遮挡。

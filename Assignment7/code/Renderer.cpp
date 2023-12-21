@@ -5,8 +5,8 @@
 #include <fstream>
 #include "Scene.hpp"
 #include "Renderer.hpp"
-#include<mingw.thread.h>
-#include<mingw.mutex.h>
+#include<thread>
+#include<mutex>
 
 inline float deg2rad(const float& deg) { return deg * M_PI / 180.0; }
 
@@ -72,6 +72,7 @@ void Renderer::Render(const Scene& scene)
         {
             for (uint32_t i = 0; i < scene.width; ++i) {
 
+                int m = j*scene.width+i;
                 // 更改了框架
                 // 对像素多次采样平均的时候，采样的都是像素中心，降噪完全依靠后续的随机数。
                 // 并且超采样可以抗锯齿，但是会导致图像有点模糊，只能提高真实采样，增大图片的像素
@@ -86,7 +87,7 @@ void Renderer::Render(const Scene& scene)
                         Vector3f dir = normalize(Vector3f(-x, y, 1));
 
                         // 同一个像素超采样可以不采用算数平均，像素中心的贡献值应该比靠近边缘的大，可以采用离散的正态分布作为权重
-                        framebuffer[j*scene.width+i] += scene.castRay(Ray(eye_pos, dir), 0) / (float)spp;
+                        framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0) / (float)spp;
                     }
                 }
             }

@@ -45,9 +45,9 @@ int main(int argc, char** argv)
 
     Material* Au = new Material(TEST, Vector3f(0.0f));
     Au->Kd = Vector3f(1.000f, 0.766f, 0.336f);
-    Au->roughness = 0.0001f;
+    Au->roughness = 0.01f;
     Au->metalness = 0.0f;
-    Au->ior = 2.0f;
+    Au->ior = 1.5f;
 
     Material* micro_Au = new Material(MICROFACET, Vector3f(0.0f));
     micro_Au->Kd = Vector3f(1.000f, 0.766f, 0.336f);

@@ -246,19 +246,22 @@ float Material::pdf(const Vector3f &wo, const Vector3f &wi, const Vector3f &N){
         }
         case TEST: 
         {
-            if(cosalpha_i_N > EPSILON) {
+            Vector3f h;
+            float ior_o, ior_i;
+            if(cosalpha_i_N > 0.0f) {
                 // 光线是从物体内部射进空气
-                Vector3f h = (ior * wo + wi).normalized(); // h 与 N方向相反
-                // std:: cout << dotProduct(h, N) <<std::endl;
-                return DistributionGGX(N, -h, roughness) * dotProduct(N, -h) / (4.f * dotProduct(wo, h));
+                h = -(ior * wo + wi).normalized();
+                ior_o = ior;
+                ior_i = 1;
             }
-            else if(cosalpha_i_N < -EPSILON) {
-                Vector3f h = (ior * wi + wo).normalized();
-                return DistributionGGX(N, -h, roughness) * dotProduct(N, -h) / (4.f * dotProduct(wo, -h));
+            else if(cosalpha_i_N < 0.0f) {
+                h = -(ior * wi + wo).normalized();
+                ior_o = 1;
+                ior_i = ior;
             }
-            else {
-                return 0.0f;
-            }
+
+            return DistributionGGX(N, h, roughness) * dotProduct(N, h) * ior_o * ior_o * std::fabs(dotProduct(wo, h))
+                    / powf(ior_i * dotProduct(wi, h) + ior_o * dotProduct(wo, h), 2);
         }
         case MICROFACET:
         {
@@ -381,18 +384,16 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
                 // std::cout << "}}"<<std::endl;
                 // 发生折射
                 Vector3f H;
-                float ior_now, ior_i, ior_o;
+                float ior_i, ior_o;
                 if(cosTheta_i_N > 0.0f) {
                     // 光线是从物体内部射进空气
-                    H = (ior * wo + wi).normalized(); // h 与 N方向相反
-                    ior_now = 1.f / ior;
-                    ior_i = 1.f / ior;
-                    ior_o = 1;
+                    H = -(ior * wo + wi).normalized(); // h 与 N方向相反
+                    ior_i = 1.f;
+                    ior_o = ior;
                 }else {
-                    H = (ior * wi + wo).normalized(); // h 与 N方向相反
-                    ior_now = 1.f / ior;
-                    ior_i = 1.f / ior;
-                    ior_o = 1;
+                    H = -(ior * wi + wo).normalized(); // h 与 N方向相反
+                    ior_i = ior;
+                    ior_o = 1.f;
                 }
                 
                 float NdotWo = std::fabs(dotProduct(N, wo));
@@ -401,7 +402,7 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
                 float HdotWi = std::fabs(dotProduct(H, wi));
 
                 float k = (roughness + 1.f) * (roughness + 1.f) / 8.f;
-                float D = DistributionGGX(N, -H, roughness);
+                float D = DistributionGGX(N, H, roughness);
                 float G = GeometrySmith(NdotWi, NdotWo, k);
 
                 Vector3f F0(0.04f);
@@ -416,7 +417,8 @@ Vector3f Material::eval(const Vector3f &wi, const Vector3f &wo, const Vector3f &
                 // std::cout << F << std::endl;
                 float temp = powf(ior_i * HdotWi + ior_o * HdotWo, 2);
 
-                Vector3f fr = (HdotWo * HdotWi * D * G * (Vector3f(1.0f) - F) * ior_now * ior_now) /  NdotWi * NdotWo;
+                Vector3f fr = (HdotWo * HdotWi * D * G * (Vector3f(1.0f) - F) * ior_o * ior_o)
+                        / powf(ior_i * dotProduct(H, wi) + ior_o * dotProduct(H, wo), 2) *  NdotWi * NdotWo;
                 // std::cout << D <<std::endl;
                 
                 Vector3f fs =  Kd / M_PI;;

@@ -198,7 +198,7 @@ Vector3f Scene::shade(Intersection& hit_obj, Vector3f wo) const
                 }
             }
 
-            hitColor = Lo_indir;
+            hitColor = Lo_dir + Lo_indir;
             break;
         }
         case DIFFUSE:{

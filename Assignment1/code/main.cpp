@@ -68,12 +68,12 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     Eigen::Matrix4f n, p;
     n << 2/(right - left), 0, 0, 0,
             0, 2/(top - bottom), 0, 0,
-            0, 0, 2/(zFar - zNear), 0,
+            0, 0, 2/(zNear - zFar), 0, // 注意正负
             0, 0, 0, 1;
 
     p << 1, 0, 0, -(right + left)/2,
             0, 1, 0, -(top + bottom)/2,
-            0, 0, 1, -(zFar + zNear)/2,
+            0, 0, 1, -(-zFar + -zNear)/2, // 注意正负
             0, 0, 0, 1;
 
     projection = n * p * m;
@@ -125,6 +125,7 @@ int main(int argc, const char** argv) // 主函数带有参数，main函数会�
         r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
 
         r.draw(pos_id, ind_id, rst::Primitive::Triangle);
+
         cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
         image.convertTo(image, CV_8UC3, 1.0f);
 

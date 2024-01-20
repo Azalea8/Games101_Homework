@@ -54,12 +54,12 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
     Eigen::Matrix4f n, p;
     n << 2/(right - left), 0, 0, 0,
             0, 2/(top - bottom), 0, 0,
-            0, 0, 2/(zFar - zNear), 0,
+            0, 0, 2/(zNear - zFar), 0,
             0, 0, 0, 1;
 
     p << 1, 0, 0, -(right + left)/2,
             0, 1, 0, -(top + bottom)/2,
-            0, 0, 1, -(zFar + zNear)/2,
+            0, 0, 1, -(-zFar + -zNear)/2,
             0, 0, 0, 1;
 
     projection = n * p * m;

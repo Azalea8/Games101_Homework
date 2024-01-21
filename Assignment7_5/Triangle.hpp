@@ -120,8 +120,8 @@ public:
 
                 vert.x = dotProduct(vert, xr);
                 vert.y = dotProduct(vert, yr);
-                vert.z = dotProduct(vert, zr);//旋转
-                vert = Scale*vert+Trans;//平移，缩放
+                vert.z = dotProduct(vert, zr);      //旋转
+                vert = Scale*vert+Trans;    //平移，缩放
 
                 face_vertices[j] = vert;
 

@@ -52,8 +52,8 @@ void Renderer::Render(const Scene& scene)
     UpdateProgress(1.f);*/
 
     // change the spp value to change sample ammount
-    int spp = 100;
-    int l = 11;
+    int spp = 16;
+    int l = 5;
 
     int thread_num = 16; //我的电脑有 16个逻辑处理器，所以开 16个线程。注：屏幕的高度一定要是线程数的倍数
 

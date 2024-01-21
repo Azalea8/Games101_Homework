@@ -58,22 +58,22 @@ int main(int argc, char** argv)
     light->Kd = Vector3f(0.65f);
 
     MeshTriangle floor("../models/cornellbox/floor.obj", white);
-    // MeshTriangle shortbox("../models/cornellbox/shortbox.obj", white_mirror);
-    // MeshTriangle tallbox("../models/cornellbox/tallbox.obj", white_mirror);
+    MeshTriangle shortbox("../models/cornellbox/shortbox.obj", micro_Au);
+    MeshTriangle tallbox("../models/cornellbox/tallbox.obj", micro_Al);
     MeshTriangle left("../models/cornellbox/left.obj", red);
     MeshTriangle right("../models/cornellbox/right.obj", green);
     MeshTriangle light_("../models/cornellbox/light.obj", light);
     // MeshTriangle bunny("../models/bunny/bunny.obj", micro_Au, Vector3f(200,-60,150), Vector3f(1500,1500,1500), Vector3f(-1,0,0), Vector3f(0,1,0), Vector3f(0,0,-1));
-    Sphere sphere(Vector3f(150, 100, 200), 100, Au);
+    // Sphere sphere(Vector3f(150, 100, 200), 100, Au);
 
     scene.Add(&floor);
-    // scene.Add(&shortbox);
-    // scene.Add(&tallbox);
+    scene.Add(&shortbox);
+    scene.Add(&tallbox);
     scene.Add(&left);
     scene.Add(&right);
     scene.Add(&light_);
     // scene.Add(&bunny);
-    scene.Add(&sphere);
+    // scene.Add(&sphere);
     
     scene.buildBVH();
 

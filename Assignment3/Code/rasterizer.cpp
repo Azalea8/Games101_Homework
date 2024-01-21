@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <cmath>
 
-const bool SSAA = true;
+const bool SSAA = false;
 
 rst::pos_buf_id rst::rasterizer::load_positions(const std::vector<Eigen::Vector3f> &positions) {
     auto id = get_next_id();
@@ -207,14 +207,14 @@ void rst::rasterizer::draw(std::vector<Triangle *> &TriangleList) {
             newtri.setNormal(i, n[i].head<3>());
         }
 
-        /*newtri.setColor(0, 148,121.0,92.0);
+        newtri.setColor(0, 148,121.0,92.0);
         newtri.setColor(1, 148,121.0,92.0);
-        newtri.setColor(2, 148,121.0,92.0);*/
+        newtri.setColor(2, 148,121.0,92.0);
 
         // setColor会将颜色归一化
-        newtri.setColor(0, 255, 0.0, 0.0);
-        newtri.setColor(1, 255, 0.0, 0.0);
-        newtri.setColor(2, 255, 0.0, 0.0);
+//        newtri.setColor(0, 255, 0.0, 0.0);
+//        newtri.setColor(1, 255, 0.0, 0.0);
+//        newtri.setColor(2, 255, 0.0, 0.0);
 
         // Also pass view space vertice position
         rasterize_triangle(newtri, viewspace_pos);
@@ -281,9 +281,9 @@ void rst::rasterizer::rasterize_triangle(const Triangle &t, const std::array<Eig
     int max_y = INT_MIN;
     for (auto point: v) {
         if (point[0] < min_x) min_x = point[0];
-        if (point[0] > max_x) max_x = point[0];
+        if (point[0] > max_x) max_x = ceil(point[0]);
         if (point[1] < min_y) min_y = point[1];
-        if (point[1] > max_y) max_y = point[1];
+        if (point[1] > max_y) max_y = ceil(point[1]);
     }
     for (int x = min_x; x <= max_x; x++) {
         for (int y = min_y; y <= max_y; y++) {
@@ -343,6 +343,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle &t, const std::array<Eig
                     float alpha = std::get<0>(abg);
                     float beta = std::get<1>(abg);
                     float gamma = std::get<2>(abg);
+
                     //z-buffer插值
                     float w_reciprocal = 1.0 / (alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w()); //归一化系数
                     float z_interpolated =
@@ -352,20 +353,21 @@ void rst::rasterizer::rasterize_triangle(const Triangle &t, const std::array<Eig
                     if (abs(z_interpolated) < depth_buf[get_index(x, y)]) {
                         Eigen::Vector2i p = {(float) x, (float) y};
                         // 颜色插值
-                        auto interpolated_color = interpolate(alpha, beta, gamma, t.color[0], t.color[1], t.color[2],
-                                                              1);
+                        auto interpolated_color = interpolate(alpha, beta, gamma, t.color[0], t.color[1],
+                                                              t.color[2],1);
                         // 法向量插值
                         auto interpolated_normal = interpolate(alpha, beta, gamma, t.normal[0], t.normal[1],
-                                                               t.normal[2],
-                                                               1);
-                        // 纹理颜色插值
+                                                               t.normal[2],1);
+                        // 纹理插值
                         auto interpolated_texcoords = interpolate(alpha, beta, gamma, t.tex_coords[0], t.tex_coords[1],
                                                                   t.tex_coords[2], 1);
-                        // 内部点位置插值
+                        // 内部点 3维空间插值
                         auto interpolated_shadingcoords = interpolate(alpha, beta, gamma, view_pos[0], view_pos[1],
                                                                       view_pos[2], 1);
+
                         fragment_shader_payload payload(interpolated_color, interpolated_normal.normalized(),
                                                         interpolated_texcoords, texture ? &*texture : nullptr);
+
                         payload.view_pos = interpolated_shadingcoords;
                         auto pixel_color = fragment_shader(payload);
                         set_pixel(p, pixel_color); //设置颜色

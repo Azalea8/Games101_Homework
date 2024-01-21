@@ -2,7 +2,8 @@
 
 ### 该项目的前 3 个作业需要 OpenCV 和 Eigen3 的第三方库，后续会出环境配置的教程以及作业框架全解析
 
----
+* [视频链接地址](https://space.bilibili.com/523296472)
+
 
 ## OpenCV
 由于我采用的 **MinGW** 作为编译器，需要 **Cmake** 编译 **OpenCV** 的源代码，由于种种原因，可能用 **Cmake** 编译会出现各种问题，万幸的是，有人已经上传了 **OpenCV-MinGW-Build** 各种版本

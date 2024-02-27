@@ -243,7 +243,7 @@ void Renderer::Render(const Scene& scene)
             float x = (2 * ((j + 0.5f) / scene.width) - 1.0f) * imageAspectRatio * 1 * scale;
             float y = (1.0f - 2 * ((i + 0.5f) / scene.height)) * 1 * scale;
 
-            // Vector3f(x, y, -1) 说明 scene在 z = -1，故 z-near距离人眼距离为 1
+            // Vector3f(x, y, -1) 说明 scene在 z = -1，故 zNear距离人眼距离为 1
             Vector3f dir = normalize(Vector3f(x, y, -1));   // Don't forget to normalize this direction!
 
             // 这里光线追踪返回该像素点对应的颜色，记录到帧缓存中

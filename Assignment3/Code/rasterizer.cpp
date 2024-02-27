@@ -151,7 +151,7 @@ static std::tuple<float, float, float> computeBarycentric2D(float x, float y, co
 void rst::rasterizer::draw(std::vector<Triangle *> &TriangleList) {
 
     float f1 = (50 - 0.1) / 2.0;
-    float f2 = (50 + 0.1) / 2.0;
+    float f2 = (-50 + -0.1) / 2.0;
 
     Eigen::Matrix4f mvp = projection * view * model;
     for (const auto &t: TriangleList) {

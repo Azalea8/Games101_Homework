@@ -63,7 +63,7 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float z
     Eigen::Matrix4f n, p;
     n << 2 / (right - left), 0, 0, 0,
             0, 2 / (top - bottom), 0, 0,
-            0, 0, 2 / (zNear - zFar), 0,
+            0, 0, 2 / (zFar - zNear), 0,
             0, 0, 0, 1;
 
     p << 1, 0, 0, -(right + left) / 2,
@@ -136,7 +136,7 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) 
         // components are. Then, accumulate that result on the *result_color* object.
         auto v = eye_pos - point; //v为出射光方向（指向眼睛）
         auto l = light.position - point; //l为指向入射光源方向
-        auto h = (v + l).normalized(); //h为半程向量即v+l归一化后的单位向量
+        auto h = (v.normalized() + l.normalized()).normalized(); //h为半程向量即v+l归一化后的单位向量
         auto r = l.dot(l); //衰减因子
         auto ambient = ka.cwiseProduct(amb_light_intensity);
         auto diffuse = kd.cwiseProduct(light.intensity / r) * std::max(0.0f, normal.normalized().dot(l.normalized()));
@@ -174,7 +174,7 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload &payload) {
         // components are. Then, accumulate that result on the *result_color* object.
         auto v = eye_pos - point; // v从着色点指向眼睛，并不是出射光
         auto l = light.position - point; // l为指向入射光源方向
-        auto h = (v + l).normalized(); // h 为半程向量即 v + l 归一化后的单位向量
+        auto h = (v.normalized() + l.normalized()).normalized(); // h 为半程向量即 v + l 归一化后的单位向量
         auto r_2 = l.dot(l); //光源到 shading point的距离的平方，用于计算光能量的的损失
 
         // a.cwiseProduct(b)将返回一个新的向量，其中第 i个元素等于 a中第 i个元素与 b中第 i个元素的乘积。

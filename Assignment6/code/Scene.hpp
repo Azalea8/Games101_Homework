@@ -36,7 +36,7 @@ public:
     [[nodiscard]] Intersection intersect(const Ray& ray) const;
 
     BVHAccel *bvh; // 场景中的 BVH树
-    void buildBVH();
+    void buildBVH();// 场景中建立大的 BVH树
 
     // 返回像素颜色，光线追踪主要实现
     Vector3f castRay(const Ray &ray, int depth) const;

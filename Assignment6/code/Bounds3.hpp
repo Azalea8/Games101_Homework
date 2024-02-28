@@ -108,10 +108,10 @@ inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
     {
         float min = (pMin[i] - origin[i]) * invDir[i];
         float max = (pMax[i] - origin[i]) * invDir[i];
-        if (!dirIsNeg[i])
-        {
-            std::swap(min, max);
-        }
+
+        // 考虑负数的大小判断问题
+        if (!dirIsNeg[i]){ std::swap(min, max); }
+
         tEnter = std::max(min, tEnter);
         tExit = std::min(max, tExit);
     }

@@ -122,9 +122,9 @@ public:
             auto new_mat =
                 new Material(MaterialType::DIFFUSE_AND_GLOSSY,
                              Vector3f(0.5, 0.5, 0.5), Vector3f(0, 0, 0));
-            new_mat->Kd = 0.6;
-            new_mat->Ks = 0.0;
-            new_mat->specularExponent = 0;
+            new_mat -> Kd = 0.6;
+            new_mat -> Ks = 0.0;
+            new_mat -> specularExponent = 0;
 
             // 单个三角形放入 triangles中
             // emplace_back函数接受一组参数，用于构造一个新的元素，并将其直接插入容器的尾部

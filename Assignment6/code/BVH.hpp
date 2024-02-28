@@ -36,7 +36,8 @@ public:
     Intersection getIntersection(BVHBuildNode* node, const Ray& ray)const; // 求得碰撞信息
 
     bool IntersectP(const Ray &ray) const;
-    BVHBuildNode* root;
+
+    BVHBuildNode* root; // BVH树根节点
 
     // BVHAccel Private Methods
     BVHBuildNode* recursiveBuild(std::vector<Object*>objects);

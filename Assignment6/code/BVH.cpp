@@ -27,6 +27,7 @@ BVHAccel::BVHAccel(std::vector<Object*> p, int maxPrimsInNode,
         hrs, mins, secs);
 }
 
+// 递归建立 BVH树
 BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
 {
     // 建立一个新的节点
@@ -48,6 +49,7 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
         node->bounds = Union(node->left->bounds, node->right->bounds);
         return node;
     }
+    // 中间节点
     else {
         /*// Compute bounds of all primitives in BVH node
         Bounds3 bounds;
@@ -132,8 +134,8 @@ Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
     }
 
     // 光线进入过包围盒
-    // 如果该节点是叶子节点，这时光线开始检测是否与该包围盒中的物体碰撞
-    if (node->left == nullptr && node->right == nullptr)
+    // 如果该节点是叶子节点，这时检测是否与该包围盒中的物体碰撞
+    if (node -> left == nullptr && node -> right == nullptr)
     {
         isect = node->object->getIntersection(ray);
         return isect;

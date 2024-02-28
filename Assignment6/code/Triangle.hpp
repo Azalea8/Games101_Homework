@@ -83,14 +83,14 @@ public:
         assert(loader.LoadedMeshes.size() == 1);
         auto mesh = loader.LoadedMeshes[0];
 
-        // min_vert 和 max_vert计算一大堆三角形的包围盒
+        // min_vert 和 max_vert初始化， 后续计算模型的包围盒
         Vector3f min_vert = Vector3f{std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity(),
                                      std::numeric_limits<float>::infinity()};
 
-        Vector3f max_vert = Vector3f{- std::numeric_limits<float>::infinity(),
-                                     - std::numeric_limits<float>::infinity(),
-                                     - std::numeric_limits<float>::infinity()};
+        Vector3f max_vert = Vector3f{-std::numeric_limits<float>::infinity(),
+                                     -std::numeric_limits<float>::infinity(),
+                                     -std::numeric_limits<float>::infinity()};
 
         // 遍历所有三角形
         for (int i = 0; i < mesh.Vertices.size(); i += 3) {
@@ -98,16 +98,17 @@ public:
             std::array<Vector3f, 3> face_vertices;
 
             for (int j = 0; j < 3; j++) {
-                // 乘以 60.f的目的是对顶点进行缩放。通过将每个顶点的坐标乘以60.f，可以使模型在渲染时变大。
+                // 乘以 60.f的目的是对顶点进行缩放。通过将每个顶点的坐标乘以 60.f，可以使模型在渲染时变大。
                 // 这种缩放可以用于调整模型的大小，以适应特定的渲染环境或视觉效果。
                 auto vert = Vector3f(mesh.Vertices[i + j].Position.X,
                                      mesh.Vertices[i + j].Position.Y,
-                                     mesh.Vertices[i + j].Position.Z) *
-                            60.f;
+                                     mesh.Vertices[i + j].Position.Z) * 60.f;
 
+                // 赋值
                 face_vertices[j] = vert;
 
-                // 更新包围盒
+                // 更新模型包围盒
+                // 注意：min_vert 和 max_vert并不一定是真实的顶点
                 min_vert = Vector3f(std::min(min_vert.x, vert.x),
                                     std::min(min_vert.y, vert.y),
                                     std::min(min_vert.z, vert.z));
@@ -126,19 +127,20 @@ public:
             new_mat->specularExponent = 0;
 
             // 单个三角形放入 triangles中
+            // emplace_back函数接受一组参数，用于构造一个新的元素，并将其直接插入容器的尾部
             triangles.emplace_back(face_vertices[0], face_vertices[1],face_vertices[2], new_mat);
         }
 
-        // 遍历完所有三角形，一堆三角形的包围盒最小化
-        // 后面 scene.buildBVH()需要用
+        // 遍历完所有三角形，模型的包围盒最小化
+        // 后面在场景中建立 BVH树需要用到
         bounding_box = Bounds3(min_vert, max_vert);
 
         std::vector<Object*> ptrs;
         for (auto& tri : triangles)
             ptrs.push_back(&tri);
 
-        // 对一堆三角形进行 BVH划分
-        // 虽然 main.cpp后面又一次 scene.buildBVH() 但是它是把一堆三角形看作一个 Object，三角形内部还需继续细分
+        // 对模型内部进行 BVH细分，加速结构实现的重点
+        // 虽然 main.cpp后面又一次 scene.buildBVH() 但是它是把模型看作一个 Object，模型内部还需继续细分
         bvh = new BVHAccel(ptrs);
     }
 
@@ -202,7 +204,7 @@ public:
         return intersec;
     }
 
-    Bounds3 bounding_box;
+    Bounds3 bounding_box; // 模型的包围盒
     std::unique_ptr<Vector3f[]> vertices;
     uint32_t numTriangles;
     std::unique_ptr<uint32_t[]> vertexIndex;
@@ -224,6 +226,7 @@ inline bool Triangle::intersect(const Ray& ray, float& tnear,
 
 inline Bounds3 Triangle::getBounds() { return Union(Bounds3(v0, v1), v2); }
 
+// 光线与三角形相作用
 inline Intersection Triangle::getIntersection(Ray ray)
 {
     Intersection inter;

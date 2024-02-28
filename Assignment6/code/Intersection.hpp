@@ -12,12 +12,12 @@ class Sphere;
 struct Intersection
 {
     Intersection(){
-        happened=false;
-        coords=Vector3f();
-        normal=Vector3f();
-        distance= std::numeric_limits<double>::max();
-        obj =nullptr;
-        m=nullptr;
+        happened=false; // 碰撞是否发生
+        coords=Vector3f(); // 碰撞点在三角形内部的重心坐标
+        normal=Vector3f(); // 法线
+        distance= std::numeric_limits<double>::max(); // 距离，也就是 t
+        obj =nullptr; // 碰撞点所属物体
+        m=nullptr; // 物体的材质信息
     }
     bool happened;
     Vector3f coords;

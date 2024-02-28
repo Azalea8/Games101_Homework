@@ -12,7 +12,7 @@ BVHAccel::BVHAccel(std::vector<Object*> p, int maxPrimsInNode,
     if (primitives.empty())
         return;
 
-    // 建立 BVH树
+    // 建立 BVH树，返回根节点
     root = recursiveBuild(primitives);
 
     // 用来计算建立 BVH树花费的时间
@@ -29,13 +29,14 @@ BVHAccel::BVHAccel(std::vector<Object*> p, int maxPrimsInNode,
 
 BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
 {
+    // 建立一个新的节点
     BVHBuildNode* node = new BVHBuildNode();
 
     // 叶子节点中只有一个物体，划分的是否过细了一点？
     if (objects.size() == 1) {
         // Create leaf _BVHBuildNode_
         node->bounds = objects[0]->getBounds();
-        node->object = objects[0];
+        node->object = objects[0];  // 叶子节点存放物体
         node->left = nullptr;
         node->right = nullptr;
         return node;
@@ -53,36 +54,34 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
         for (int i = 0; i < objects.size(); ++i)
             bounds = Union(bounds, objects[i]->getBounds());*/
 
-        Bounds3 centroidBounds;
+        Bounds3 centroidBounds; // 质心包围盒
         for (int i = 0; i < objects.size(); ++i)
-            centroidBounds =
-                Union(centroidBounds, objects[i]->getBounds().Centroid());
+            centroidBounds = Union(centroidBounds, objects[i]->getBounds().Centroid());
 
         // 如果包围盒是不均匀的，也就是某一个轴特别长
         // 就需要优先划分
+        // 注意：这里的划分是基于对物体的划分，而不是对空间的划分
         int dim = centroidBounds.maxExtent();
+
         switch (dim) {
             // X轴过长
             case 0:
                 std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-                    return f1->getBounds().Centroid().x <
-                           f2->getBounds().Centroid().x;
+                    return f1->getBounds().Centroid().x < f2->getBounds().Centroid().x;
                 });
                 break;
             // Y轴过长
             case 1:
                 std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-                    return f1->getBounds().Centroid().y <
-                           f2->getBounds().Centroid().y;
+                    return f1->getBounds().Centroid().y < f2->getBounds().Centroid().y;
                 });
                 break;
             // Z轴过长
             case 2:
                 std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-                    return f1->getBounds().Centroid().z <
-                           f2->getBounds().Centroid().z;
+                    return f1->getBounds().Centroid().z < f2->getBounds().Centroid().z;
                 });
-            break;
+                break;
         }
 
         // 使用 C++标准库中的 迭代器 和 容器 来进行对象切片的操作
@@ -96,9 +95,12 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
         // 使用 assert断言来检查对象切片后的总数量是否等于原始容器 objects的数量，以确保切片操作正确执行。
         assert(objects.size() == (leftshapes.size() + rightshapes.size()));
 
+        // 节点向下递归
+        // 中间节点无需将物体保存到节点中
         node->left = recursiveBuild(leftshapes);
         node->right = recursiveBuild(rightshapes);
 
+        // 当前节点的包围盒大小递归返回
         node->bounds = Union(node->left->bounds, node->right->bounds);
     }
 
@@ -108,8 +110,7 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
 Intersection BVHAccel::Intersect(const Ray& ray) const
 {
     Intersection isect;
-    if (!root)
-        return isect;
+    if (!root) return isect;
     isect = BVHAccel::getIntersection(root, ray);
     return isect;
 }
@@ -124,12 +125,14 @@ Intersection BVHAccel::getIntersection(BVHBuildNode* node, const Ray& ray) const
     dirIsNeg[1] = int(ray.direction.y >= 0);
     dirIsNeg[2] = int(ray.direction.z >= 0);
 
+    // 如果光线连包围盒都没有撞击到，则一定不会与包围盒中的物体相碰撞
     if (!node->bounds.IntersectP(ray, ray.direction_inv, dirIsNeg))
     {
         return isect;
     }
 
-    // 光线进入过包围盒，并且该节点是叶子节点，遍历该包围盒中的所有物体
+    // 光线进入过包围盒
+    // 如果该节点是叶子节点，这时光线开始检测是否与该包围盒中的物体碰撞
     if (node->left == nullptr && node->right == nullptr)
     {
         isect = node->object->getIntersection(ray);

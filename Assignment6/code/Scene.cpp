@@ -7,12 +7,14 @@
 
 void Scene::buildBVH() {
     printf(" - Generating BVH...\n\n");
+
+    // 此时场景里面的物体就只有一个模型，也就是 MeshTriangle
     this->bvh = new BVHAccel(objects, 1, BVHAccel::SplitMethod::NAIVE);
 }
 
 Intersection Scene::intersect(const Ray &ray) const
 {
-    return this->bvh->Intersect(ray);
+    return this -> bvh -> Intersect(ray); // 光线先在场景中的 BVH树中碰撞
 }
 
 bool Scene::trace(
@@ -52,26 +54,26 @@ bool Scene::trace(
 // at the intersection point.
 Vector3f Scene::castRay(const Ray &ray, int depth) const
 {
-    if (depth > this->maxDepth) {
+    if (depth > this -> maxDepth) {
         return Vector3f(0.0,0.0,0.0);
     }
 
-    Intersection intersection = Scene::intersect(ray);
+    Intersection intersection = Scene::intersect(ray); // 光线在场景中碰撞
 
     Vector3f hitColor = this -> backgroundColor;
 
     if(intersection.happened) {
-
+        // origin + t * direction
         Vector3f hitPoint = ray.origin + ray.direction * intersection.distance;
-        Material *m = intersection.m;
-        Object *hitObject = intersection.obj;
+        Material *m = intersection.m; // 材质
+        Object *hitObject = intersection.obj; // 碰撞的所属物体
         Vector3f N = intersection.normal; // normal
         Vector2f st; // st coordinates
 
         // 此时碰撞信息已经包含了所有我们需要的信息
         // hitObject->getSurfaceProperties(hitPoint, ray.direction, index, uv, N, st);
 
-        switch (m->getType()) {
+        switch (m -> getType()) {
             case REFLECTION_AND_REFRACTION:
             {
                 Vector3f reflectionDirection = normalize(reflect(ray.direction, N));

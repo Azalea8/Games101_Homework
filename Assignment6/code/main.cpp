@@ -14,14 +14,14 @@ int main(int argc, char** argv)
     // 创建场景
     Scene scene(1280, 960);
 
-    MeshTriangle bunny("../models/bunny/bunny.obj");
+    MeshTriangle bunny("../models/bunny/bunny.obj"); // 加载模型，并对模型进行预处理，BVH划分
 
     scene.Add(&bunny);
 
     scene.Add(std::make_unique<Light>(Vector3f(-20, 70, 20), 1));
     scene.Add(std::make_unique<Light>(Vector3f(20, 70, 20), 1));
 
-    scene.buildBVH();
+    scene.buildBVH(); // 场景建立 BVH树
 
     Renderer r;
 

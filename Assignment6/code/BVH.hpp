@@ -32,8 +32,9 @@ public:
     Bounds3 WorldBound() const;
     ~BVHAccel();
 
-    Intersection Intersect(const Ray &ray) const;
-    Intersection getIntersection(BVHBuildNode* node, const Ray& ray)const;
+    Intersection Intersect(const Ray &ray) const; // 光线在 BVH树中碰撞
+    Intersection getIntersection(BVHBuildNode* node, const Ray& ray)const; // 求得碰撞信息
+
     bool IntersectP(const Ray &ray) const;
     BVHBuildNode* root;
 
@@ -47,10 +48,10 @@ public:
 };
 
 struct BVHBuildNode {
-    Bounds3 bounds;
+    Bounds3 bounds; // 包围盒，两个三维空间点
     BVHBuildNode *left;
     BVHBuildNode *right;
-    Object* object;
+    Object* object; // 包围盒中的物体
 
 public:
     int splitAxis=0, firstPrimOffset=0, nPrimitives=0;

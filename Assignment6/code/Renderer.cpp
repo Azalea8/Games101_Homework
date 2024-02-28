@@ -16,23 +16,27 @@ const float EPSILON = 0.00001;
 // framebuffer is saved to a file.
 void Renderer::Render(const Scene& scene)
 {
-    std::vector<Vector3f> framebuffer(scene.width * scene.height);
+    std::vector<Vector3f> framebuffer(scene.width * scene.height); // 帧缓冲
 
     float scale = tan(deg2rad(scene.fov * 0.5));
     float imageAspectRatio = scene.width / (float)scene.height;
 
     Vector3f eye_pos(-1, 5, 10);
+
     int m = 0;
 
+    // 遍历所有像素
     for (uint32_t i = 0; i < scene.height; ++i) {
         for (uint32_t j = 0; j < scene.width; ++j) {
+
             // 坐标系转换
             float x = (2 * ((j + 0.5f) / scene.width) - 1.0f) * imageAspectRatio * 1 * scale;
             float y = (1.0f - 2 * ((i + 0.5f) / scene.height)) * 1 * scale;
 
-
             Vector3f dir = Vector3f(x, y, -1); // Don't forget to normalize this direction!
-            dir = normalize(dir);
+            dir = normalize(dir); // 方向向量
+
+            // 光线封装成一个类
             Ray ray(eye_pos, dir);
             framebuffer[m++] = scene.castRay(ray, 0);
 

@@ -28,6 +28,8 @@ class Bounds3
     }
 
     Vector3f Diagonal() const { return pMax - pMin; }
+
+    // 用来计算哪条轴偏长
     int maxExtent() const
     {
         Vector3f d = Diagonal();
@@ -89,7 +91,7 @@ class Bounds3
 };
 
 
-
+// 光线与包围盒碰撞
 inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
                                 const std::array<int, 3>& dirIsNeg) const
 {

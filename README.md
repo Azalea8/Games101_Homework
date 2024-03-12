@@ -1,9 +1,15 @@
 # Games101_Homework
 
-### 该项目的前 3 个作业需要 OpenCV 和 Eigen3 的第三方库，后续会出环境配置的教程以及作业框架全解析
+### 光栅化部分需要 *opencv*，*eigen3*；光线追踪部分无需第三方库；作业八需要 *freetype* 这一个第三方库
+### 后续会出环境配置的教程以及作业框架全解析。
 
 * [视频链接地址](https://space.bilibili.com/523296472)
 
+---
+
+### 所有编译好的依赖都放在了 *Games101_environment* 文件夹下，后面的手动编译可以直接略过
+
+---
 
 ## OpenCV
 由于我采用的 **MinGW** 作为编译器，需要 **Cmake** 编译 **OpenCV** 的源代码，由于种种原因，可能用 **Cmake** 编译会出现各种问题，万幸的是，有人已经上传了 **OpenCV-MinGW-Build** 各种版本
@@ -36,13 +42,38 @@
 #### Eigen库编译
 * 下载地址 [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 
-* 解压到任意目录，eigen的根目录下新建一个 build目录
+* 解压到任意目录，*eigen* 的根目录下新建一个 *build* 目录
 
-* 打开 cmake-gui，source目录设置成  eigen的根目录，build目录设置成刚刚新建的目录，然后点击 configure，出来的 makefile的格式选择 mingw，等待 config结束
+* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 configure，出来的 makefile的格式选择 mingw，等待 config结束
 
-* 点击 generate
+* install地址也可以改成其他路径，避免日后找不到
 
-* 管理员权限运行 cmd，进入 build目录，运行 mingw32-make,之后运行 mingw32-make install
+* 点击 *generate*
 
-* 删除解压出来的这个 eigen目录(因为上面安装的已经安装到了c盘Program File x86里了，有时候build的时候会找错路径)
+* 管理员权限运行 *cmd*，进入 *build* 目录，运行 *mingw32-make*,之后运行 *mingw32-make install*
+
+* 删除解压出来的这个 *eigen* 目录(因为上面安装的已经安装到了 *c* 盘 *Program File x86* 里了，有时候 *build* 的时候会找错路径)
+
+
+## FreeType
+* 下载地址 [freetype](https://download.savannah.gnu.org/releases/freetype/)
+
+* 解压到任意目录，*eigen* 的根目录下新建一个 *build* 目录
+
+* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 configure，出来的 makefile的格式选择 mingw，等待 config结束
+
+* 然后会有很多选项，把能勾的都勾上，install地址也可以改成其他路径，避免日后找不到
+
+* 点击 *generate*
+
+* 管理员权限运行 *cmd*，进入 *build* 目录，运行 *mingw32-make*,之后运行 *mingw32-make install*
+
+* 这时候就会在你设置好的目录下看到如下项目结构
+
+        include
+            freetype2/..
+        lib
+            cmake/..
+            pkgconfig/..
+            libfreetype.a
 

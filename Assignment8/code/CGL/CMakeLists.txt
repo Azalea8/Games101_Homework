@@ -164,7 +164,7 @@ link_directories(/usr/lib/x86_64-linux-gnu/mesa/)
 # Required packages
 find_package(OpenGL REQUIRED)
 # find_package(Freetype REQUIRED)
-include_directories("D:/Games101_environment/freetype/include/freetype2")
+include_directories("D:/Code/CLionProjects/Games101_Homework/Games101_environment/freetype/include/freetype2")
 
 include_directories( ${OPENGL_INCLUDE_DIRS})
 

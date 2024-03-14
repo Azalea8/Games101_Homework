@@ -1,12 +1,8 @@
 # Games101_Homework
 
-### 光栅化部分需要 *opencv*，*eigen3*；光线追踪部分无需第三方库；作业八需要 *freetype*
-### 后续会出环境配置的教程以及作业框架全解析。
-
-* [视频链接地址](https://space.bilibili.com/523296472)
-
-### 所有编译好的依赖都放在了 *Games101_environment* 文件夹下，后面的手动编译第三方库可以直接略过
-
+### 所有编译好的依赖都放在了 *Games101_environment* 文件夹下
+* [课程地址](https://www.bilibili.com/video/BV1X7411F744)
+* [框架解析](https://space.bilibili.com/523296472)
 ---
 
 ## OpenCV
@@ -16,7 +12,22 @@
 
 该项目所用的版本号为 *4.5.2*
 
-记得在 *CMakeLists.txt* 中修改路径
+## Eigen3
+* 下载地址 [*Eigen*](https://eigen.tuxfamily.org/index.php?title=Main_Page)
+
+* 解压到任意目录，*eigen* 的根目录下新建一个 *build* 目录
+
+* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 *configure*，出来的 *makefile* 的格式选择 *mingw*，等待 *config* 结束
+
+* *install* 地址也可以改成其他路径，尽量不要放在 *C* 盘，避免日后找不到
+
+* 点击 *generate*
+
+* 管理员权限运行 *cmd*，进入 *build* 目录，运行 *mingw32-make*,之后运行 *mingw32-make install*
+
+* 删除解压出来的这个 *eigen* 目录(因为上面安装的已经安装到了 *c* 盘 *Program File x86* 里了，有时候 *build* 的时候会找错路径)
+
+#### 记得在 *CMakeLists.txt* 中修改路径
 
     cmake_minimum_required(VERSION 3.10)
     project(Rasterizer)
@@ -33,22 +44,6 @@
 
     add_executable(Rasterizer main.cpp rasterizer.hpp rasterizer.cpp Triangle.hpp Triangle.cpp)
     target_link_libraries(Rasterizer ${OpenCV_LIBRARIES})
-
-
-## Eigen3
-* 下载地址 [*Eigen*](https://eigen.tuxfamily.org/index.php?title=Main_Page)
-
-* 解压到任意目录，*eigen* 的根目录下新建一个 *build* 目录
-
-* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 *configure*，出来的 *makefile* 的格式选择 *mingw*，等待 *config* 结束
-
-* *install* 地址也可以改成其他路径，尽量不要放在 *C* 盘，避免日后找不到
-
-* 点击 *generate*
-
-* 管理员权限运行 *cmd*，进入 *build* 目录，运行 *mingw32-make*,之后运行 *mingw32-make install*
-
-* 删除解压出来的这个 *eigen* 目录(因为上面安装的已经安装到了 *c* 盘 *Program File x86* 里了，有时候 *build* 的时候会找错路径)
 
 ## FreeType
 * 下载地址 [*freetype*](https://download.savannah.gnu.org/releases/freetype/)

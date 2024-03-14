@@ -1,24 +1,22 @@
 # Games101_Homework
 
-### 光栅化部分需要 *opencv*，*eigen3*；光线追踪部分无需第三方库；作业八需要 *freetype* 这一个第三方库
+### 光栅化部分需要 *opencv*，*eigen3*；光线追踪部分无需第三方库；作业八需要 *freetype*
 ### 后续会出环境配置的教程以及作业框架全解析。
 
 * [视频链接地址](https://space.bilibili.com/523296472)
 
----
-
-### 所有编译好的依赖都放在了 *Games101_environment* 文件夹下，后面的手动编译可以直接略过
+### 所有编译好的依赖都放在了 *Games101_environment* 文件夹下，后面的手动编译第三方库可以直接略过
 
 ---
 
 ## OpenCV
-由于我采用的 **MinGW** 作为编译器，需要 **Cmake** 编译 **OpenCV** 的源代码，由于种种原因，可能用 **Cmake** 编译会出现各种问题，万幸的是，有人已经上传了 **OpenCV-MinGW-Build** 各种版本
+由于我采用的 *MinGW* 作为编译器，需要 *Cmake* 编译 *OpenCV* 的源代码，由于种种原因，可能用 *Cmake* 编译会出现各种问题，万幸的是，有人已经上传了 *OpenCV-MinGW-Build* 各种版本
 
-* 下载地址 [OpenCV-MinGW-Build](https://github.com/huihut/OpenCV-MinGW-Build)
+* 下载地址 [*OpenCV-MinGW-Build*](https://github.com/huihut/OpenCV-MinGW-Build)
 
-该项目所用的版本号为 **4.5.2**
+该项目所用的版本号为 *4.5.2*
 
-记得在 **CMakeLists.txt** 中修改路径
+记得在 *CMakeLists.txt* 中修改路径
 
     cmake_minimum_required(VERSION 3.10)
     project(Rasterizer)
@@ -35,18 +33,16 @@
 
     add_executable(Rasterizer main.cpp rasterizer.hpp rasterizer.cpp Triangle.hpp Triangle.cpp)
     target_link_libraries(Rasterizer ${OpenCV_LIBRARIES})
-    
+
 
 ## Eigen3
-
-#### Eigen库编译
-* 下载地址 [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page)
+* 下载地址 [*Eigen*](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 
 * 解压到任意目录，*eigen* 的根目录下新建一个 *build* 目录
 
-* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 configure，出来的 makefile的格式选择 mingw，等待 config结束
+* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 *configure*，出来的 *makefile* 的格式选择 *mingw*，等待 *config* 结束
 
-* install地址也可以改成其他路径，避免日后找不到
+* *install* 地址也可以改成其他路径，尽量不要放在 *C* 盘，避免日后找不到
 
 * 点击 *generate*
 
@@ -54,15 +50,14 @@
 
 * 删除解压出来的这个 *eigen* 目录(因为上面安装的已经安装到了 *c* 盘 *Program File x86* 里了，有时候 *build* 的时候会找错路径)
 
-
 ## FreeType
-* 下载地址 [freetype](https://download.savannah.gnu.org/releases/freetype/)
+* 下载地址 [*freetype*](https://download.savannah.gnu.org/releases/freetype/)
 
 * 解压到任意目录，*eigen* 的根目录下新建一个 *build* 目录
 
-* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 configure，出来的 makefile的格式选择 mingw，等待 config结束
+* 打开 *cmake-gui*，*source* 目录设置成  *eigen* 的根目录，*build* 目录设置成刚刚新建的目录，然后点击 *configure*，出来的 *makefile*的格式选择 *mingw*，等待 *config*结束
 
-* 然后会有很多选项，把能勾的都勾上，install地址也可以改成其他路径，避免日后找不到
+* 然后会有很多选项，把能勾的都勾上，*install* 地址也可以改成其他路径，尽量不要放在 *C*盘，避免日后找不到
 
 * 点击 *generate*
 
@@ -76,4 +71,6 @@
             cmake/..
             pkgconfig/..
             libfreetype.a
+
+#### 作业八改动的地方相对较多，这里就不贴具体改动的部分，可以直接用我上传的 *Assignment8* 充当作业的框架
 

@@ -3,7 +3,6 @@
 ### 所有编译好的依赖都放在了 *Games101_environment* 文件夹下
 * [课程地址](https://www.bilibili.com/video/BV1X7411F744)
 * [框架解析](https://space.bilibili.com/523296472)
----
 
 ## OpenCV
 由于我采用的 *MinGW* 作为编译器，需要 *Cmake* 编译 *OpenCV* 的源代码，由于种种原因，可能用 *Cmake* 编译会出现各种问题，万幸的是，有人已经上传了 *OpenCV-MinGW-Build* 各种版本
